@@ -1,1 +1,19 @@
+# 의존성
+node_modules/
+
+# 생성 산출물 — 원장에서 언제든 재생성되므로 커밋하지 않는다
+output/
+validation-report.json
+
+# 마스킹 해제본(제출용 원본) — 절대 커밋 금지
+*.raw.json
+data/**/*.unmasked.*
+
+# 환경/임시
+.env
+.DS_Store
+*.log
+~$*
+sync-warnings.txt
+sync.log
 
