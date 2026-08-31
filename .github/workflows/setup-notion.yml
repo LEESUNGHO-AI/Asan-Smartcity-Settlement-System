@@ -60,4 +60,3 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           cat result.txt >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(출력 없음)" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-
