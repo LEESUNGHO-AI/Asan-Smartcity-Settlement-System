@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leesungho-ai.github.io/asan-sms/schema/common.schema.json",
+  "title": "아산시 강소형 스마트시티 정산시스템 공통 정의",
+  "description": "모든 원장(data/*.json)이 공유하는 타입·열거값 정의. 본 파일이 정본이며 코드 추가 시 반드시 codes/*.json과 동시 갱신할 것.",
+  "$defs": {
+    "날짜": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "ISO 8601 (YYYY-MM-DD)"
+    },
+    "일시": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 (YYYY-MM-DDTHH:mm:ssZ). 등록·수정 시각은 GitHub Actions가 자동 기록"
+    },
+    "금액": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "원 단위 정수. 소수점·콤마·문자열 금지"
+    },
+    "사업자등록번호": {
+      "type": "string",
+      "pattern": "^[0-9]{3}-[0-9]{2}-[0-9]{5}$",
+      "description": "000-00-00000 형식"
+    },
+    "URL": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://"
+    },
+    "기관코드": {
+      "type": "string",
+      "enum": [
+        "ASAN",
+        "JEIL",
+        "HOSEO",
+        "CNI",
+        "KAIST"
+      ],
+      "description": "ASAN=아산시(보조사업자) / JEIL=제일엔지니어링(직접보조·PMO) / HOSEO=호서대학교 산학협력단 / CNI=충남연구원 / KAIST=한국과학기술원"
+    },
+    "단위사업코드": {
+      "type": "string",
+      "enum": [
+        "SP-OASIS",
+        "SP-INNO",
+        "SP-POLE",
+        "SP-STORE",
+        "SP-NET",
+        "SP-DRT",
+        "SP-AI",
+        "SP-RND",
+        "SP-PMO"
+      ],
+      "description": "SP-OASIS=디지털 OASIS SPOT / SP-INNO=아산 이노베이션 스퀘어 / SP-POLE=스마트폴 / SP-STORE=무인매장 / SP-NET=유·무선 통신망 / SP-DRT=수요응답형 교통 / SP-AI=AI 융합플랫폼 / SP-RND=연구·리빙랩 / SP-PMO=사업관리"
+    },
+    "재원": {
+      "type": "string",
+      "enum": [
+        "국비",
+        "도비",
+        "시비",
+        "자기부담금"
+      ],
+      "description": "보조사업비 재원 구분(작성지침 §4②). 정산보고서는 재원별 구분 작성이 필수"
+    },
+    "보조비목": {
+      "type": "string",
+      "enum": [
+        "인건비",
+        "운영비",
+        "여비",
+        "업무추진비",
+        "직무수행경비",
+        "연구개발비",
+        "민간이전",
+        "자치단체이전",
+        "건설비",
+        "유형자산",
+        "무형자산",
+        "보전금"
+      ],
+      "description": "보조사업 집행결과 제출 양식의 보조비목. codes/expense-categories.json 참조"
+    },
+    "지급방법": {
+      "type": "string",
+      "enum": [
+        "계좌이체",
+        "보조금전용카드",
+        "현금",
+        "개인카드",
+        "법인카드",
+        "기타"
+      ],
+      "description": "국고보조금 통합관리지침 §18① — 계좌이체·보조금전용카드만 인정. 그 외는 불인정 위험"
+    },
+    "증빙유형": {
+      "type": "string",
+      "enum": [
+        "계약서",
+        "견적서",
+        "발주서",
+        "납품서",
+        "검수조서",
+        "세금계산서",
+        "전자세금계산서",
+        "계좌이체증",
+        "카드전표",
+        "지출결의서",
+        "급여대장",
+        "근로계약서",
+        "4대보험납부확인서",
+        "원천징수이행상황신고서",
+        "참여율확인표",
+        "출장복명서",
+        "준공검사조서",
+        "기성검사조서",
+        "사진",
+        "기타"
+      ]
+    },
+    "계약방법": {
+      "type": "string",
+      "enum": [
+        "일반경쟁입찰",
+        "제한경쟁입찰",
+        "지명경쟁입찰",
+        "협상에의한계약",
+        "수의계약",
+        "조달청위탁",
+        "지자체위탁"
+      ]
+    },
+    "계약유형": {
+      "type": "string",
+      "enum": [
+        "공사",
+        "전문공사",
+        "전기공사",
+        "정보통신공사",
+        "소방공사",
+        "용역",
+        "물품",
+        "기타"
+      ]
+    },
+    "검토상태": {
+      "type": "string",
+      "enum": [
+        "미제출",
+        "제출완료",
+        "검토중",
+        "보완필요",
+        "확정",
+        "불인정"
+      ],
+      "description": "확정 상태만 정산보고서 산출 대상에 포함됨"
+    },
+    "재산구분": {
+      "type": "string",
+      "enum": [
+        "부동산",
+        "선박",
+        "부표·부잔교·부선거",
+        "항공기",
+        "기계·장비",
+        "기타"
+      ],
+      "description": "보조금법 시행령 §15① 중요재산 구분. 처분제한(공시)기간: 부동산·선박·항공기 10년, 기타 기계·장비 5년"
+    },
+    "재원구성": {
+      "type": "object",
+      "description": "재원별 금액. 합계는 상위 금액 필드와 일치해야 함(검증규칙 R-07)",
+      "properties": {
+        "국비": {
+          "$ref": "#/$defs/금액"
+        },
+        "도비": {
+          "$ref": "#/$defs/금액"
+        },
+        "시비": {
+          "$ref": "#/$defs/금액"
+        },
+        "자기부담금": {
+          "$ref": "#/$defs/금액"
+        }
+      },
+      "additionalProperties": false
+    },
+    "감사추적": {
+      "type": "object",
+      "description": "레코드 생애주기 추적. GitHub 커밋 히스토리와 함께 감사 증거로 사용",
+      "required": [
+        "등록일시",
+        "등록자"
+      ],
+      "properties": {
+        "등록일시": {
+          "$ref": "#/$defs/일시"
+        },
+        "등록자": {
+          "type": "string",
+          "minLength": 1
+        },
+        "수정일시": {
+          "$ref": "#/$defs/일시"
+        },
+        "수정자": {
+          "type": "string"
+        },
+        "출처": {
+          "type": "string",
+          "enum": [
+            "Notion",
+            "Slack",
+            "수기입력",
+            "시스템연계"
+          ],
+          "description": "입력 경로. GitHub이 정본이며 Notion/Slack은 입력 채널"
+        }
+      },
+      "additionalProperties": false
+    },
+    "비목코드": {
+      "type": "string",
+      "pattern": "^[0-9]{3}$",
+      "description": "통계목 코드 3자리 (예: 인건비=110, 건설비=420)"
+    },
+    "세목코드": {
+      "type": "string",
+      "pattern": "^[0-9]{2}$",
+      "description": "세목 코드 2자리 (예: 보수=01)"
+    },
+    "지급처": {
+      "type": "object",
+      "description": "세부집행내역의 수령 주체. 구분에 따라 표기 항목이 달라진다(개인=성명·생년월일·참여율 / 사업자=지급처·사업자등록번호)",
+      "required": [
+        "구분",
+        "명칭"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "구분": {
+          "type": "string",
+          "enum": [
+            "개인",
+            "사업자"
+          ]
+        },
+        "명칭": {
+          "type": "string",
+          "minLength": 1,
+          "description": "개인은 성명, 사업자는 상호"
+        },
+        "사업자등록번호": {
+          "$ref": "#/$defs/사업자등록번호"
+        },
+        "생년월일": {
+          "type": "string",
+          "pattern": "^'[0-9]{2}\\.[0-9]{2}\\.\\*\\*$",
+          "description": "개인정보 보호를 위해 일(日) 자리는 반드시 ** 로 마스킹하여 저장한다. 예: '82.05.**"
+        },
+        "참여율": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "인건비·여비 표기용"
+        }
+      }
+    }
+  }
+}

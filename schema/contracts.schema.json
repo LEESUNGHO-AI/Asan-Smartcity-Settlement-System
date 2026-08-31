@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leesungho-ai.github.io/asan-sms/schema/contracts.schema.json",
+  "title": "계약대장",
+  "description": "통합관리지침 §21~22 계약방법·조달청 검토 준수 여부 판정의 근거. 계약체결일로부터 15일 이내 등록 의무(R-03).",
+  "type": "object",
+  "required": ["레코드"],
+  "additionalProperties": false,
+
+  "properties": {
+    "$schema": { "type": "string" },
+    "갱신일시": { "$ref": "common.schema.json#/$defs/일시" },
+
+    "레코드": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "계약ID", "기관", "단위사업", "계약명", "계약유형",
+          "계약방법", "추정가격", "계약금액", "계약일", "계약상대자", "감사추적"
+        ],
+        "additionalProperties": false,
+
+        "properties": {
+          "계약ID": {
+            "type": "string",
+            "pattern": "^CT-[0-9]{4}-[0-9]{4}$"
+          },
+          "기관": { "$ref": "common.schema.json#/$defs/기관코드" },
+          "단위사업": { "$ref": "common.schema.json#/$defs/단위사업코드" },
+          "계약명": { "type": "string", "minLength": 1 },
+          "계약유형": { "$ref": "common.schema.json#/$defs/계약유형" },
+          "계약방법": { "$ref": "common.schema.json#/$defs/계약방법" },
+          "추정가격": { "$ref": "common.schema.json#/$defs/금액" },
+          "계약금액": { "$ref": "common.schema.json#/$defs/금액" },
+          "낙찰차액": {
+            "$ref": "common.schema.json#/$defs/금액",
+            "description": "추정가격 - 계약금액. 미사용 시 반납 대상(R-11)"
+          },
+          "계약일": { "$ref": "common.schema.json#/$defs/날짜" },
+          "착수일": { "$ref": "common.schema.json#/$defs/날짜" },
+          "준공예정일": { "$ref": "common.schema.json#/$defs/날짜" },
+          "준공일": { "$ref": "common.schema.json#/$defs/날짜" },
+
+          "계약상대자": {
+            "type": "object",
+            "required": ["상호"],
+            "additionalProperties": false,
+            "properties": {
+              "상호": { "type": "string" },
+              "사업자등록번호": { "$ref": "common.schema.json#/$defs/사업자등록번호" },
+              "공동수급체": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "상호": { "type": "string" },
+                    "지분율": { "type": "number", "minimum": 0, "maximum": 100 }
+                  }
+                }
+              }
+            }
+          },
+
+          "조달": {
+            "type": "object",
+            "description": "통합관리지침 §21③ 임계액 초과 시 조달청·지자체 위탁 또는 나라장터 이용 의무",
+            "additionalProperties": false,
+            "properties": {
+              "나라장터공고번호": { "type": "string" },
+              "위탁구분": {
+                "type": "string",
+                "enum": ["조달청위탁", "지자체위탁", "나라장터직접", "해당없음"]
+              },
+              "설계적정성검토": { "type": "boolean", "description": "§22① 30억(특수공사 3억) 이상" },
+              "검토요청일": { "$ref": "common.schema.json#/$defs/날짜" },
+              "예외사유": { "type": "string", "description": "§22② 예외 적용 시 사유 기재 필수" }
+            }
+          },
+
+          "시스템등록일": {
+            "$ref": "common.schema.json#/$defs/날짜",
+            "description": "e나라도움(보조금시스템) 계약서 등록일. 계약일+15일 이내(R-03)"
+          },
+
+          "변경계약": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["차수", "변경일", "변경후금액", "사유"],
+              "additionalProperties": false,
+              "properties": {
+                "차수": { "type": "integer", "minimum": 1 },
+                "변경일": { "$ref": "common.schema.json#/$defs/날짜" },
+                "변경전금액": { "$ref": "common.schema.json#/$defs/금액" },
+                "변경후금액": { "$ref": "common.schema.json#/$defs/금액" },
+                "증감률": { "type": "number" },
+                "사유": { "type": "string" },
+                "타당성검토": {
+                  "type": "boolean",
+                  "description": "공사비 10% 이상 증가 시 조달청 타당성 검토 필수(R-10)"
+                },
+                "변경승인번호": { "type": "string", "description": "baseline.변경승인이력 참조" }
+              }
+            }
+          },
+
+          "보증": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "계약보증": { "type": "boolean" },
+              "하자보수보증": { "type": "boolean" },
+              "하자담보기간_개월": { "type": "integer" },
+              "보증기간만료일": { "$ref": "common.schema.json#/$defs/날짜" }
+            }
+          },
+
+          "상태": {
+            "type": "string",
+            "enum": ["계약체결", "진행중", "준공", "검수완료", "해지", "정산완료"]
+          },
+          "파일링크": {
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/$defs/URL" }
+          },
+          "비고": { "type": "string" },
+          "감사추적": { "$ref": "common.schema.json#/$defs/감사추적" }
+        }
+      }
+    }
+  }
+}

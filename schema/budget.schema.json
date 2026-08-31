@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leesungho-ai.github.io/asan-sms/schema/budget.schema.json",
+  "title": "보조비목별 예산집행계획",
+  "description": "「보조사업 집행결과 제출 양식」 3.보조비목별 총괄명세서의 예산집행계획(A) 열 원천. 집행액(B)·집행잔액(A-B)·집행률(B/A)은 evidence.json에서 산출한다. 변경승인으로 예산이 조정되면 반드시 baseline.변경승인이력과 함께 갱신할 것.",
+  "type": "object",
+  "required": ["레코드"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "기준일": { "$ref": "common.schema.json#/$defs/날짜" },
+    "근거": { "type": "string", "description": "예산 근거문서(실시계획·변경승인번호 등)" },
+    "레코드": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["보조비목","비목코드","보조세목","세목코드","예산집행계획"],
+        "additionalProperties": false,
+        "properties": {
+          "보조비목": { "$ref": "common.schema.json#/$defs/보조비목" },
+          "비목코드": { "$ref": "common.schema.json#/$defs/비목코드" },
+          "보조세목": { "type": "string" },
+          "세목코드": { "$ref": "common.schema.json#/$defs/세목코드" },
+          "예산집행계획": { "$ref": "common.schema.json#/$defs/금액" },
+          "재원별": { "$ref": "common.schema.json#/$defs/재원구성" },
+          "비고": { "type": "string" }
+        }
+      }
+    }
+  }
+}

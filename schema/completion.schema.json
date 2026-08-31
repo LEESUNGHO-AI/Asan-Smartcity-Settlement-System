@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leesungho-ai.github.io/asan-sms/schema/completion.schema.json",
+  "title": "준공산출물 대장",
+  "description": "단위사업별 준공서류 확보 현황. 필수문서 미확보 시 준공 판정 불가(R-09). 유형별 필수문서 목록은 codes/completion-documents.json에 정의.",
+  "type": "object",
+  "required": ["레코드"],
+  "additionalProperties": false,
+
+  "properties": {
+    "$schema": { "type": "string" },
+    "갱신일시": { "$ref": "common.schema.json#/$defs/일시" },
+
+    "레코드": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["준공ID", "단위사업", "유형", "명칭", "문서", "감사추적"],
+        "additionalProperties": false,
+
+        "properties": {
+          "준공ID": { "type": "string", "pattern": "^CP-[0-9]{4}-[0-9]{4}$" },
+          "단위사업": { "$ref": "common.schema.json#/$defs/단위사업코드" },
+          "계약ID": { "type": ["string", "null"], "pattern": "^CT-[0-9]{4}-[0-9]{4}$" },
+          "유형": {
+            "type": "string",
+            "enum": ["건축·토목", "ICT구축", "SW·플랫폼", "용역·연구", "물품", "운영인계"],
+            "description": "유형별로 요구되는 필수문서 세트가 달라짐"
+          },
+          "명칭": { "type": "string", "minLength": 1 },
+          "수행사": { "type": "string" },
+
+          "문서": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["문서명", "상태"],
+              "additionalProperties": false,
+              "properties": {
+                "문서코드": { "type": "string", "description": "codes/completion-documents.json 참조" },
+                "문서명": { "type": "string" },
+                "필수여부": { "type": "boolean" },
+                "작성주체": { "type": "string" },
+                "상태": { "$ref": "common.schema.json#/$defs/검토상태" },
+                "접수일": { "$ref": "common.schema.json#/$defs/날짜" },
+                "파일링크": { "$ref": "common.schema.json#/$defs/URL" },
+                "보완사유": { "type": "string" }
+              }
+            }
+          },
+
+          "검사": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "예비준공검사일": { "$ref": "common.schema.json#/$defs/날짜" },
+              "준공검사일": { "$ref": "common.schema.json#/$defs/날짜" },
+              "검사자": { "type": "string" },
+              "검수일": { "$ref": "common.schema.json#/$defs/날짜" },
+              "검수자": { "type": "string" },
+              "지적사항": { "type": "string" },
+              "조치완료일": { "$ref": "common.schema.json#/$defs/날짜" }
+            }
+          },
+
+          "인계": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "인계일": { "$ref": "common.schema.json#/$defs/날짜" },
+              "인수기관": { "type": "string" },
+              "운영주체": { "type": "string" }
+            }
+          },
+
+          "물리적진도율": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "집행률과 분리 관리. 두 값의 괴리는 R-12로 경고"
+          },
+          "상태": {
+            "type": "string",
+            "enum": ["진행중", "준공검사대기", "준공완료", "인계완료", "지연"]
+          },
+          "비고": { "type": "string" },
+          "감사추적": { "$ref": "common.schema.json#/$defs/감사추적" }
+        }
+      }
+    }
+  }
+}

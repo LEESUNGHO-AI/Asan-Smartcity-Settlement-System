@@ -1,0 +1,26 @@
+{
+  "name": "asan-smartcity-settlement-system",
+  "version": "0.2.0",
+  "description": "아산시 강소형 스마트시티 조성사업 정산시스템 — GitHub 원장(Single Source of Truth)",
+  "private": true,
+  "scripts": {
+    "validate": "node scripts/validate.js",
+    "validate:strict": "node scripts/validate.js --strict",
+    "validate:json": "node scripts/validate.js --json",
+    "report": "node scripts/generate-report.js",
+    "check": "npm run validate",
+    "sync": "node scripts/sync-notion.js",
+    "sync:dry": "node scripts/sync-notion.js --dry-run",
+    "notify": "node scripts/validate.js --json | node scripts/notify-slack.js",
+    "notion:preview": "node integrations/notion/setup-databases.js --dry-run",
+    "notion:setup": "node integrations/notion/setup-databases.js",
+    "notion:update": "node integrations/notion/setup-databases.js --update"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

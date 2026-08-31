@@ -1,0 +1,463 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leesungho-ai.github.io/asan-sms/schema/baseline.schema.json",
+  "title": "정산 기준정보(Baseline)",
+  "description": "모든 검증규칙의 판정 기준. 협약서·교부결정통지서 원문에서만 값을 채울 것. 추정치는 confirmed=false로 표시하며, confirmed=false 항목이 남아 있는 한 정산보고서 산출은 차단됨(R-01).",
+  "type": "object",
+  "required": [
+    "사업",
+    "재원비율",
+    "기관",
+    "기한",
+    "정산기준"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "사업": {
+      "type": "object",
+      "required": [
+        "사업명",
+        "사업기간",
+        "총사업비"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "사업명": {
+          "type": "string"
+        },
+        "내역사업명": {
+          "type": "string"
+        },
+        "소관부처": {
+          "type": "string"
+        },
+        "전담기관": {
+          "type": "string"
+        },
+        "사업기간": {
+          "type": "object",
+          "required": [
+            "개시일",
+            "종료일",
+            "confirmed"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "개시일": {
+              "$ref": "common.schema.json#/$defs/날짜"
+            },
+            "종료일": {
+              "$ref": "common.schema.json#/$defs/날짜"
+            },
+            "confirmed": {
+              "type": "boolean"
+            },
+            "근거문서": {
+              "type": "string"
+            }
+          }
+        },
+        "준공기준시점": {
+          "type": "object",
+          "description": "실적보고서 제출기한 및 3년 운영의무 기산점. 협약 제14조② 관련",
+          "required": [
+            "기준일",
+            "confirmed"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "기준일": {
+              "$ref": "common.schema.json#/$defs/날짜"
+            },
+            "판정근거": {
+              "type": "string"
+            },
+            "confirmed": {
+              "type": "boolean"
+            }
+          }
+        },
+        "총사업비": {
+          "type": "object",
+          "required": [
+            "금액",
+            "confirmed"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "금액": {
+              "$ref": "common.schema.json#/$defs/금액"
+            },
+            "재원별": {
+              "$ref": "common.schema.json#/$defs/재원구성"
+            },
+            "confirmed": {
+              "type": "boolean"
+            },
+            "근거문서": {
+              "type": "string"
+            }
+          }
+        },
+        "세부사업명": {
+          "type": "string"
+        },
+        "기관명": {
+          "type": "string"
+        },
+        "총괄책임자": {
+          "type": "string",
+          "description": "양식 1.사업개요의 총괄책임자란. 직책 표기는 '상무 이성호'"
+        }
+      }
+    },
+    "재원비율": {
+      "type": "object",
+      "description": "협약상 재원 분담비율. R-07(재원비율 이탈) 판정 기준",
+      "required": [
+        "국비",
+        "도비",
+        "시비",
+        "허용오차_퍼센트포인트"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "국비": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "도비": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "시비": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "자기부담금": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "허용오차_퍼센트포인트": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "기관": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "코드",
+          "명칭",
+          "구분",
+          "교부액"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "코드": {
+            "$ref": "common.schema.json#/$defs/기관코드"
+          },
+          "명칭": {
+            "type": "string"
+          },
+          "구분": {
+            "type": "string",
+            "enum": [
+              "보조사업자",
+              "직접보조사업자",
+              "간접보조사업자"
+            ]
+          },
+          "상위기관": {
+            "$ref": "common.schema.json#/$defs/기관코드"
+          },
+          "교부액": {
+            "type": "object",
+            "required": [
+              "총액"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "총액": {
+                "$ref": "common.schema.json#/$defs/금액"
+              },
+              "재원별": {
+                "$ref": "common.schema.json#/$defs/재원구성"
+              }
+            }
+          },
+          "전용계좌": {
+            "type": "object",
+            "description": "통합관리지침 §20 별도계정·별도계좌",
+            "additionalProperties": false,
+            "properties": {
+              "은행": {
+                "type": "string"
+              },
+              "계좌번호_마스킹": {
+                "type": "string"
+              },
+              "개설일": {
+                "$ref": "common.schema.json#/$defs/날짜"
+              }
+            }
+          },
+          "검증대상": {
+            "type": "object",
+            "description": "보조금법 시행령 §12의2② — 보조금 총액 1억원 이상 시 감사인 검증 의무",
+            "required": [
+              "해당여부"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "해당여부": {
+                "type": "boolean"
+              },
+              "판정근거": {
+                "type": "string"
+              },
+              "검증기관": {
+                "type": "string"
+              },
+              "계약일": {
+                "$ref": "common.schema.json#/$defs/날짜"
+              }
+            }
+          },
+          "회계감사대상": {
+            "type": "object",
+            "description": "보조금법 §27의2 — 동일 회계연도 중앙관서 교부 총액 10억원 이상",
+            "required": [
+              "해당여부"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "해당여부": {
+                "type": "boolean"
+              },
+              "판정근거": {
+                "type": "string"
+              },
+              "confirmed": {
+                "type": "boolean"
+              }
+            }
+          },
+          "실적보고기한_개월": {
+            "type": "integer",
+            "enum": [
+              2,
+              3
+            ],
+            "description": "보조금법 시행령 §12① — 민간 2개월, 지방자치단체 3개월"
+          }
+        }
+      }
+    },
+    "기한": {
+      "type": "object",
+      "description": "법정 기한 파라미터. 하드코딩 금지 — 검증기는 본 값을 참조",
+      "additionalProperties": false,
+      "properties": {
+        "중요재산_취득보고_일": {
+          "type": "integer",
+          "description": "통합관리지침 §46① (15일)"
+        },
+        "계약서_시스템등록_일": {
+          "type": "integer",
+          "description": "통합관리지침 §21④ (15일)"
+        },
+        "감사인_선임_개월": {
+          "type": "integer",
+          "description": "시행령 §12의3① (3개월)"
+        },
+        "감사보고서_제출_개월": {
+          "type": "integer",
+          "description": "시행령 §12의3② (4개월)"
+        },
+        "자료보관_년": {
+          "type": "integer",
+          "description": "통합관리지침 §31 (5년)"
+        },
+        "자료보관_목표년도": {
+          "type": "integer",
+          "description": "본 사업 내부방침(감사 대응)"
+        }
+      }
+    },
+    "정산기준": {
+      "type": "object",
+      "description": "계약방법·집행방법 판정 임계값. 통합관리지침 §21③·§22① 기준",
+      "additionalProperties": false,
+      "properties": {
+        "조달_물품용역_초과액": {
+          "$ref": "common.schema.json#/$defs/금액"
+        },
+        "조달_건설공사_초과액": {
+          "$ref": "common.schema.json#/$defs/금액"
+        },
+        "조달_전문공사_초과액": {
+          "$ref": "common.schema.json#/$defs/금액"
+        },
+        "조달_기타공사_초과액": {
+          "$ref": "common.schema.json#/$defs/금액"
+        },
+        "조달청검토_공사_이상액": {
+          "$ref": "common.schema.json#/$defs/금액"
+        },
+        "조달청검토_특수공사_이상액": {
+          "$ref": "common.schema.json#/$defs/금액"
+        },
+        "설계변경_타당성검토_비율": {
+          "type": "number"
+        },
+        "중요재산_하한액": {
+          "$ref": "common.schema.json#/$defs/금액"
+        },
+        "복수견적_기준액": {
+          "$ref": "common.schema.json#/$defs/금액"
+        },
+        "인정지급방법": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/지급방법"
+          }
+        }
+      }
+    },
+    "변경승인이력": {
+      "type": "array",
+      "description": "보조금법 §22 사업계획 변경승인. 승인 없는 비목 전용·기간 변경은 전액 반납 위험",
+      "items": {
+        "type": "object",
+        "required": [
+          "승인번호",
+          "승인일",
+          "구분",
+          "내용"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "승인번호": {
+            "type": "string"
+          },
+          "승인일": {
+            "$ref": "common.schema.json#/$defs/날짜"
+          },
+          "구분": {
+            "type": "string",
+            "enum": [
+              "사업비변경",
+              "비목전용",
+              "기간변경",
+              "내용변경",
+              "이월승인",
+              "기타"
+            ]
+          },
+          "내용": {
+            "type": "string"
+          },
+          "승인기관": {
+            "type": "string"
+          },
+          "파일링크": {
+            "$ref": "common.schema.json#/$defs/URL"
+          }
+        }
+      }
+    },
+    "미확정사항": {
+      "type": "array",
+      "description": "협약·국토부 회신 대기 항목. 비어 있어야 정산보고서 산출 가능",
+      "items": {
+        "type": "object",
+        "required": [
+          "항목",
+          "확인처",
+          "중요도"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "항목": {
+            "type": "string"
+          },
+          "확인처": {
+            "type": "string"
+          },
+          "중요도": {
+            "type": "string",
+            "enum": [
+              "최상",
+              "상",
+              "중",
+              "하"
+            ]
+          },
+          "질의일": {
+            "$ref": "common.schema.json#/$defs/날짜"
+          },
+          "회신일": {
+            "$ref": "common.schema.json#/$defs/날짜"
+          },
+          "상태": {
+            "type": "string",
+            "enum": [
+              "미질의",
+              "질의중",
+              "회신완료"
+            ]
+          },
+          "질의번호": {
+            "type": "string",
+            "description": "질의서 문항 번호. 1-x=아산시 확인요청, 2-x=국토교통부 질의"
+          },
+          "문서번호": {
+            "type": "string",
+            "description": "시행 공문번호"
+          }
+        }
+      }
+    },
+    "연도별교부내역": {
+      "type": "array",
+      "description": "양식 1.사업개요의 교부 내역 표. 연도별 국비·지방비 교부액",
+      "items": {
+        "type": "object",
+        "required": [
+          "연도",
+          "국비",
+          "지방비"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "연도": {
+            "type": "integer"
+          },
+          "국비": {
+            "$ref": "common.schema.json#/$defs/금액"
+          },
+          "지방비": {
+            "$ref": "common.schema.json#/$defs/금액"
+          },
+          "confirmed": {
+            "type": "boolean"
+          },
+          "비고": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
