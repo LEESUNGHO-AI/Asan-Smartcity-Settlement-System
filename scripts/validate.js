@@ -313,6 +313,13 @@ function validateRules() {
     }
   }
 
+  // ── R-23 음수 집행(환불·정정) ────────────────────────
+  const 음수 = ev.filter((e) => e.집행금액 < 0);
+  if (음수.length) {
+    const s2 = 음수.reduce((a, e) => a + e.집행금액, 0);
+    warn('R-23', `환불·정정 ${음수.length}건`, `음수 집행 합계 ${won(s2)} — 원인 건과 상계 처리되었는지 확인 필요`, '작성지침 §5');
+  }
+
   // ── R-13 ID 중복 ─────────────────────────────────────
   const dup = (arr, key, label) => {
     const seen = new Set();

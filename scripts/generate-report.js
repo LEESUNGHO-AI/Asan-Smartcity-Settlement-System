@@ -34,6 +34,8 @@ const arg = (k, d) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] :
 const FROM = arg('--from', '2000-01-01');
 const TO = arg('--to', '2099-12-31');
 const ORG = arg('--org', 'JEIL');
+// 기본은 '확정' 건만. 초안 확인 시 --status 확정,제출완료 처럼 지정한다.
+const STATUS = arg('--status', '확정').split(',').map((s) => s.trim());
 
 const read = (p) => JSON.parse(fs.readFileSync(path.join(ROOT, p), 'utf8'));
 const base = read('data/baseline.json');
@@ -42,7 +44,7 @@ const codes = read('codes/expense-categories.json');
 const orgs = read('codes/organizations.json').코드;
 
 const all = read('data/evidence.json').레코드
-  .filter((e) => e.기관 === ORG && e.검토상태 === '확정');
+  .filter((e) => e.기관 === ORG && STATUS.includes(e.검토상태));
 const inPeriod = all.filter((e) => e.집행일자 >= FROM && e.집행일자 <= TO);
 
 // ── 포맷 ────────────────────────────────────────────────
@@ -244,7 +246,7 @@ function section3() {
     ['보조비목', '보조세목', '예산집행계획(A)', '집행액(B)', '집행잔액(A-B)', '집행률(B/A)'],
     rows, [16, 18, 18, 18, 18, 12]
   ));
-  out.push(p(`※ 집행액은 검토상태 '확정' 증빙 ${all.length}건의 합계이며, 미확정 증빙은 제외됨`,
+  out.push(p(`※ 집행액은 검토상태 [${STATUS.join(', ')}] 증빙 ${all.length}건의 합계임`,
     { size: 15, color: '595959', before: 80 }));
   return out;
 }
