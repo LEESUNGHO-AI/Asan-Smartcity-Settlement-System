@@ -204,7 +204,10 @@ function toRecord(page, warn) {
     if (old?.감사추적?.등록일시) item.rec.감사추적.등록일시 = old.감사추적.등록일시;
   }
 
-  const records = parsed.map((i) => i.rec)
+  // 사업비 엑셀에서 들어온 레코드는 건드리지 않는다.
+  // 두 경로(엑셀·Notion)가 같은 파일에 쓰므로, 각자 자기 출처의 것만 교체한다.
+  const 엑셀분 = prev.레코드.filter((r) => (r.감사추적 || {}).출처 !== 'Notion');
+  const records = 엑셀분.concat(parsed.map((i) => i.rec))
     .sort((a, b) => a.집행일자.localeCompare(b.집행일자) || a.증빙ID.localeCompare(b.증빙ID));
 
   // 중복 ID 방어
@@ -216,6 +219,7 @@ function toRecord(page, warn) {
 
   const added = records.filter((r) => !prevById[r.증빙ID]).length;
   const removed = prev.레코드.filter((r) => !seen.has(r.증빙ID)).length;
+  console.log(`  엑셀 유래 ${엑셀분.length}건 보존 · Notion 유래 ${parsed.length}건 갱신`);
 
   console.log('\n── 동기화 요약 ──────────────────────────────');
   console.log(`  기존 ${prev.레코드.length}건 → 신규 ${records.length}건`);
