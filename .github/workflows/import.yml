@@ -31,11 +31,11 @@ jobs:
         run: |
           if [ "${{ github.event.repository.private }}" = "true" ]; then
             echo "mask=" >> $GITHUB_OUTPUT
-            echo "공개=false" >> $GITHUB_OUTPUT
+            echo "is_public=false" >> $GITHUB_OUTPUT
             echo "비공개 저장소 — 실명 그대로 기록"
           else
             echo "mask=--mask" >> $GITHUB_OUTPUT
-            echo "공개=true" >> $GITHUB_OUTPUT
+            echo "is_public=true" >> $GITHUB_OUTPUT
             echo "공개 저장소 — 개인 성명을 가려서 기록합니다"
           fi
 
@@ -85,7 +85,7 @@ jobs:
       # 공개 저장소의 아티팩트는 누구나 내려받을 수 있으므로 DOCX를 올리지 않는다.
       # 제출용 원본(실명 포함)은 PMO가 로컬에서 생성한다.
       - uses: actions/upload-artifact@v4
-        if: always() && steps.vis.outputs.공개 != 'true'
+        if: always() && steps.vis.outputs.is_public != 'true'
         with:
           name: 집행결과-제출양식
           path: |
@@ -95,7 +95,7 @@ jobs:
           retention-days: 90
 
       - uses: actions/upload-artifact@v4
-        if: always() && steps.vis.outputs.공개 == 'true'
+        if: always() && steps.vis.outputs.is_public == 'true'
         with:
           name: 검증결과
           path: |
