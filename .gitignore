@@ -16,4 +16,3 @@ data/**/*.unmasked.*
 ~$*
 sync-warnings.txt
 sync.log
-

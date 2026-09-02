@@ -1,0 +1,30 @@
+name: 대시보드 배포
+
+on:
+  push:
+    branches: [main]
+    paths: ['dashboard/**', 'data/**']
+  schedule:
+    - cron: '0 22 * * *'   # 매일 07:00 KST
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+
+      - name: 집계 생성 (개인정보 미포함 검사 포함)
+        run: node scripts/publish-dashboard.js
+
+      - name: 공개 저장소로 배포
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.DASHBOARD_TOKEN }}
+          external_repository: LEESUNGHO-AI/Asan-Smartcity-Settlement-Dashboard
+          publish_branch: gh-pages
+          publish_dir: ./dashboard
+          commit_message: '집계 갱신'

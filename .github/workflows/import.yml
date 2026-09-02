@@ -1,0 +1,75 @@
+name: 사업비 엑셀 반영
+
+on:
+  push:
+    paths: ['source/**']
+  workflow_dispatch:
+    inputs:
+      status:
+        description: '보고서에 포함할 검토상태'
+        type: string
+        default: '확정,제출완료'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-ledger
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+
+      - name: 엑셀 → 원장 변환
+        run: node scripts/import-xlsx.js --all | tee import.log
+
+      - name: 법정요건 검증
+        run: |
+          node scripts/validate.js --json > validation-report.json || true
+          node scripts/validate.js || true
+
+      - name: 집행결과 제출 양식 생성
+        run: |
+          for ORG in JEIL HOSEO CNI KAIST; do
+            if [ -d "source/$ORG" ] && [ -n "$(ls -A source/$ORG/*.xls* 2>/dev/null)" ]; then
+              node scripts/generate-report.js --org "$ORG" \
+                --from 2023-12-01 --to 2026-12-31 \
+                --status "${{ inputs.status || '확정,제출완료' }}" || true
+            fi
+          done
+
+      - name: 대시보드 집계 갱신
+        run: node scripts/publish-dashboard.js
+
+      - name: 원장 커밋
+        run: |
+          if git diff --quiet data/ dashboard/; then echo "변경 없음"; exit 0; fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ dashboard/
+          git commit -m "data: 사업비 엑셀 반영 ($(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M') KST)"
+          git push
+
+      - name: Slack 알림
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: node scripts/notify-slack.js --file validation-report.json || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: 집행결과-제출양식
+          path: |
+            output/*.docx
+            validation-report.json
+            import.log
+          retention-days: 90

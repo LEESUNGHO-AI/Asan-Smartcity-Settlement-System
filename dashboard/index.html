@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보조사업 집행결과 — 아산시 강소형 스마트시티 조성사업</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=IBM+Plex+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#ffffff;
+  --field:#f4f6f8;
+  --ink:#16191d;
+  --ink-2:#565d66;
+  --ink-3:#8b939d;
+  --rule:#ccd2da;
+  --rule-strong:#1f3864;
+  --band:#e4eaf2;
+  --fill:#dce6f2;
+  --seal:#b3261e;
+  --ok:#1a6b3c;
+  --hold:#8a6100;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--field);color:var(--ink);
+  font-family:"IBM Plex Sans KR",-apple-system,"Malgun Gothic",sans-serif;
+  font-weight:400;font-size:15px;line-height:1.6;
+  font-variant-numeric:tabular-nums;
+}
+.sheet{
+  max-width:960px;margin:0 auto;background:var(--paper);
+  padding:44px 40px 72px;min-height:100vh;
+  border-left:1px solid var(--rule);border-right:1px solid var(--rule);
+}
+h1,h2,h3{font-family:"Nanum Myeongjo",serif;font-weight:800;margin:0;letter-spacing:-.01em}
+
+/* ── 문서 머리 ── */
+.dochead{border-bottom:2.5px solid var(--rule-strong);padding-bottom:14px}
+.docmark{font-size:12.5px;color:var(--ink-2);letter-spacing:.06em}
+h1{font-size:31px;line-height:1.25;margin:6px 0 4px}
+.subject{font-size:14px;color:var(--ink-2)}
+.asof{float:right;text-align:right;font-size:12.5px;color:var(--ink-3);line-height:1.7}
+.asof b{display:block;font-size:15px;color:var(--ink);font-weight:600}
+
+/* ── 집행 요약 (본 문서의 주인공) ── */
+.hero{margin:30px 0 8px}
+.hero-rate{font-family:"Nanum Myeongjo",serif;font-size:74px;line-height:.9;font-weight:800;letter-spacing:-.03em}
+.hero-rate small{font-size:26px;font-weight:700;margin-left:2px}
+.hero-line{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.hero-nums{text-align:right;font-size:14px;color:var(--ink-2);line-height:1.9}
+.hero-nums b{color:var(--ink);font-weight:600;font-size:17px}
+.gauge{margin-top:16px;height:15px;background:var(--field);border:1px solid var(--rule);position:relative}
+.gauge i{position:absolute;inset:0 auto 0 0;background:var(--rule-strong);display:block}
+.gauge span{position:absolute;top:-1px;bottom:-1px;width:1px;background:var(--seal)}
+.gauge-note{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-3);margin-top:5px}
+
+/* ── 절 ── */
+section{margin-top:38px}
+h2{font-size:19px;padding-bottom:7px;border-bottom:1.5px solid var(--rule-strong)}
+h2 em{font-style:normal;font-family:"IBM Plex Sans KR";font-size:12.5px;font-weight:400;color:var(--ink-3);margin-left:9px}
+.lead{font-size:13.5px;color:var(--ink-2);margin:10px 0 0}
+
+/* ── 표 ── */
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13.5px}
+th,td{border:1px solid var(--rule);padding:7px 9px;vertical-align:middle}
+thead th{background:var(--band);font-weight:600;font-size:12.5px;text-align:center;color:#22314e}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+td.c{text-align:center}
+tbody tr:hover{background:#fafbfc}
+tfoot td{background:var(--field);font-weight:600}
+
+/* 집행률을 행 배경으로 그린다 — 표가 곧 그래프 */
+td.bar{position:relative;text-align:right;padding-right:9px}
+td.bar>i{position:absolute;left:0;top:0;bottom:0;background:var(--fill);z-index:0}
+td.bar>span{position:relative;z-index:1;font-weight:600}
+td.bar.over>i{background:#f6dcd9}
+td.bar.over>span{color:var(--seal)}
+
+/* ── 지적사항 ── */
+.finding{border-left:3px solid var(--rule);padding:9px 0 9px 13px;margin-top:9px;display:flex;gap:13px;align-items:baseline;flex-wrap:wrap}
+.finding.err{border-left-color:var(--seal)}
+.finding.warn{border-left-color:var(--hold)}
+.finding .rule{font-weight:600;min-width:52px}
+.finding .cnt{color:var(--ink-2);min-width:52px;text-align:right}
+.finding .txt{flex:1;min-width:200px}
+.finding .law{font-size:12px;color:var(--ink-3)}
+.tally{display:flex;gap:28px;margin-top:12px;align-items:baseline}
+.tally div{font-size:13px;color:var(--ink-2)}
+.tally b{font-family:"Nanum Myeongjo",serif;font-size:30px;font-weight:800;margin-right:5px}
+.tally .e b{color:var(--seal)}
+.tally .w b{color:var(--hold)}
+
+/* ── 도장 ── */
+.stamp{float:right;margin:-6px 0 0 16px;width:96px;height:96px;border:2.5px solid var(--seal);border-radius:50%;
+  color:var(--seal);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-family:"Nanum Myeongjo",serif;font-weight:800;line-height:1.15;transform:rotate(-7deg);opacity:.9}
+.stamp b{font-size:20px}
+.stamp small{font-size:10.5px;font-weight:400;letter-spacing:.04em}
+
+/* ── 각주 ── */
+.foot{margin-top:46px;padding-top:14px;border-top:1px solid var(--rule);font-size:12px;color:var(--ink-3);line-height:1.8}
+.foot b{color:var(--ink-2);font-weight:500}
+a{color:#1f3864}
+
+@media (max-width:640px){
+  .sheet{padding:26px 18px 52px;border:0}
+  h1{font-size:23px}
+  .asof{float:none;text-align:left;margin-bottom:10px}
+  .hero-rate{font-size:56px}
+  .hero-nums{text-align:left}
+  .stamp{float:none;margin:14px 0}
+  table{font-size:12.5px}
+  th,td{padding:5px 6px}
+  .hide-sm{display:none}
+}
+@media print{body{background:#fff}.sheet{border:0;max-width:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="sheet" id="sheet">
+  <p style="color:var(--ink-3)">집행 현황을 불러오는 중입니다.</p>
+</div>
+
+<script>
+const won = n => (n||0).toLocaleString('ko-KR');
+const 억 = n => (n/1e8).toFixed(1);
+const pct = n => (n*100).toFixed(1);
+const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+fetch('data.json?v=' + Date.now())
+  .then(r => { if(!r.ok) throw new Error(r.status); return r.json(); })
+  .then(render)
+  .catch(e => {
+    document.getElementById('sheet').innerHTML =
+      '<h1>집행 현황을 불러오지 못했습니다</h1><p class="lead">data.json 을 읽을 수 없습니다 ('
+      + esc(e.message) + '). 배포 워크플로가 정상적으로 끝났는지 확인하십시오.</p>';
+  });
+
+function render(d){
+  const 생성 = new Date(d.생성일시);
+  const 기준 = 생성.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
+  const 미확정 = d.미확정사항.filter(x => x.상태 !== '회신완료').length;
+  const 막힘 = d.검증.오류 > 0;
+
+  const 비목행 = d.비목별.map(b => {
+    const over = b.집행 > b.예산;
+    const w = Math.min(b.집행률,1)*100;
+    return `<tr>
+      <td>${esc(b.비목)}(${b.비목코드})</td>
+      <td>${esc(b.세목)}(${b.세목코드})</td>
+      <td class="n">${won(b.예산)}</td>
+      <td class="n">${won(b.집행)}</td>
+      <td class="n hide-sm">${won(b.잔액)}</td>
+      <td class="bar${over?' over':''}"><i style="width:${w}%"></i><span>${pct(b.집행률)}%</span></td>
+    </tr>`;
+  }).join('');
+
+  const 재원행 = Object.entries(d.재원별).sort((a,b)=>b[1]-a[1]).map(([k,v]) =>
+    `<tr><td>${esc(k)}</td><td class="n">${won(v)}</td><td class="n">${pct(v/d.집행.집행)}%</td></tr>`).join('');
+
+  const 기관행 = d.기관별.map(o =>
+    `<tr><td>${esc(o.명칭)}</td><td class="c">${esc(o.구분)}</td><td class="n">${o.건수.toLocaleString('ko-KR')}</td><td class="n">${won(o.금액)}</td></tr>`).join('');
+
+  const 지적 = d.검증.항목.map(f => `
+    <div class="finding ${f.수준==='ERROR'?'err':'warn'}">
+      <span class="rule">${esc(f.규칙)}</span>
+      <span class="cnt">${f.건수.toLocaleString('ko-KR')}건</span>
+      <span class="txt">${esc(f.요약)}</span>
+      <span class="law">${esc(f.근거)}</span>
+    </div>`).join('') || '<p class="lead">지적사항이 없습니다.</p>';
+
+  const 상태 = Object.entries(d.증빙.상태별).map(([k,v]) => `${esc(k)} ${v.toLocaleString('ko-KR')}건`).join(' / ');
+
+  const 질의 = d.미확정사항.filter(x => x.상태 !== '회신완료').map(x =>
+    `<tr><td class="c">${esc(x.질의번호||'—')}</td><td>${esc(x.항목)}</td><td class="c hide-sm">${esc(x.확인처)}</td><td class="c">${esc(x.중요도)}</td></tr>`).join('');
+
+  document.getElementById('sheet').innerHTML = `
+  <div class="dochead">
+    <div class="asof"><b>${기준} 기준</b>준공까지 ${d.사업.dday.toLocaleString('ko-KR')}일<br>증빙 ${d.증빙.총건수.toLocaleString('ko-KR')}건</div>
+    <div class="docmark">보조사업 집행결과</div>
+    <h1>${esc(d.사업.사업명)}</h1>
+    <div class="subject">${esc(d.사업.세부사업명||'')}</div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-line">
+      <div>
+        <div class="hero-rate">${pct(d.집행.집행률)}<small>%</small></div>
+        <div class="docmark" style="margin-top:6px">총사업비 대비 집행률</div>
+      </div>
+      <div class="hero-nums">
+        집행 <b>${won(d.집행.집행)}원</b><br>
+        예산 ${won(d.집행.예산)}원 · 잔액 ${won(d.집행.잔액)}원
+      </div>
+    </div>
+    <div class="gauge"><i style="width:${pct(d.집행.집행률)}%"></i><span style="left:100%"></span></div>
+    <div class="gauge-note"><span>0</span><span>미집행 ${억(d.집행.잔액)}억원</span><span>${억(d.집행.예산)}억원</span></div>
+  </div>
+
+  <section>
+    <h2>정산 준비 상태<em>보조금 관리에 관한 법률 · 국고보조금 통합관리지침</em></h2>
+    ${막힘 ? `<div class="stamp"><b>보류</b><small>오류 ${d.검증.오류}</small></div>` : `<div class="stamp" style="border-color:var(--ok);color:var(--ok)"><b>적정</b><small>오류 없음</small></div>`}
+    <div class="tally">
+      <div class="e"><b>${d.검증.오류.toLocaleString('ko-KR')}</b>해소해야 할 오류</div>
+      <div class="w"><b>${d.검증.경고.toLocaleString('ko-KR')}</b>확인이 필요한 경고</div>
+    </div>
+    <p class="lead">${막힘
+      ? '오류가 남아 있는 동안 정산보고서 산출이 차단됩니다. 아래 항목을 해소하면 자동으로 열립니다.'
+      : '법정 요건 검사를 모두 통과했습니다. 정산보고서를 산출할 수 있습니다.'}</p>
+    ${지적}
+  </section>
+
+  <section>
+    <h2>보조비목별 총괄명세서<em>행 배경의 채움이 집행률입니다</em></h2>
+    <table>
+      <thead><tr>
+        <th style="width:17%">보조비목</th><th style="width:17%">보조세목</th>
+        <th style="width:19%">예산집행계획</th><th style="width:19%">집행액</th>
+        <th style="width:17%" class="hide-sm">집행잔액</th><th style="width:11%">집행률</th>
+      </tr></thead>
+      <tbody>${비목행}</tbody>
+      <tfoot><tr>
+        <td colspan="2" class="c">합계</td>
+        <td class="n">${won(d.집행.예산)}</td>
+        <td class="n">${won(d.집행.집행)}</td>
+        <td class="n hide-sm">${won(d.집행.잔액)}</td>
+        <td class="c">${pct(d.집행.집행률)}%</td>
+      </tr></tfoot>
+    </table>
+  </section>
+
+  <section>
+    <h2>재원별 · 기관별 집행</h2>
+    <table>
+      <thead><tr><th style="width:40%">재원</th><th>집행액</th><th style="width:20%">구성비</th></tr></thead>
+      <tbody>${재원행}</tbody>
+    </table>
+    <table>
+      <thead><tr><th style="width:42%">기관</th><th style="width:20%">구분</th><th style="width:14%">건수</th><th>집행액</th></tr></thead>
+      <tbody>${기관행}</tbody>
+    </table>
+    <p class="lead">증빙 검토 상태 — ${상태}</p>
+  </section>
+
+  ${질의 ? `<section>
+    <h2>회신 대기 중인 확인사항<em>${미확정}건</em></h2>
+    <p class="lead">아래가 확정되어야 기준정보가 잠기고 정산보고서를 낼 수 있습니다.</p>
+    <table>
+      <thead><tr><th style="width:9%">질의</th><th>항목</th><th style="width:18%" class="hide-sm">확인처</th><th style="width:10%">중요도</th></tr></thead>
+      <tbody>${질의}</tbody>
+    </table>
+  </section>` : ''}
+
+  <div class="foot">
+    <b>이 화면은 집계값만 표시합니다.</b> 개인 성명·생년월일·사업자등록번호·거래처별 개별 금액은 포함되지 않습니다.
+    원장은 비공개 저장소에서 관리되며, 매일 07:00에 갱신된 집계가 이곳에 배포됩니다.<br>
+    ㈜제일엔지니어링종합건축사사무소 PMO · 상무 이성호 · 생성 ${생성.toLocaleString('ko-KR')}
+  </div>`;
+}
+</script>
+</body>
+</html>

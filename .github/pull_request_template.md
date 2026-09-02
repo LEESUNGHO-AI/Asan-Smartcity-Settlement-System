@@ -15,4 +15,3 @@
 - [ ] 증빙 원본 파일을 커밋하지 않고 `파일링크` URL로만 참조함
 - [ ] 커밋 메시지가 규약(`docs/OPERATIONS.md`)을 따름
 - [ ] `baseline.json` / `budget.json` 변경 시 근거 문서를 위에 기재함
-

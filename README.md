@@ -39,6 +39,8 @@ Notion·Slack·Excel은 입력 채널이자 조회 화면이며, 값이 충돌�
 ## 구조
 
 ```
+source/     ★사업비 엑셀을 여기에 올리면 나머지는 자동★
+dashboard/  공개 대시보드 (집계값만)
 schema/     JSON Schema 7종 — 데이터 구조의 법률적 정의
   common          공통 타입·열거값 (기관·비목·재원·지급처·증빙유형)
   baseline        협약·교부결정·법정 임계값·미확정사항
@@ -70,6 +72,8 @@ npm run validate:json    # 기계 판독용 JSON 출력
 
 npm run report -- --org JEIL --from 2025-10-01 --to 2026-06-30
 
+npm run import:all       # source/ 의 엑셀 → 원장 (사람 입력 없음)
+npm run dashboard        # 집계 → dashboard/data.json
 npm run sync             # Notion → data/evidence.json
 npm run sync:dry         # 변경사항만 확인
 npm run notify           # 검증 결과 Slack 전송
@@ -145,6 +149,38 @@ GitHub Actions에서 `집행결과 제출 양식 생성` 워크플로를 수동 
 - [ ] 정산 대시보드 (GitHub Pages, 집계값만)
 
 ---
+
+## 데이터는 어디서 오는가
+
+**아무도 새로 입력하지 않는다.** 이미 매달 만드시는 사업비 엑셀이 그대로 원장이 된다.
+
+```
+source/JEIL/사업비.xlsx  ──┐
+source/HOSEO/사업비.xlsx ──┤  import-xlsx.js   budget.json
+source/CNI/사업비.xlsx   ──┼───────────────▶  evidence.json
+source/KAIST/사업비.xlsx ──┘                       │
+                                                   ├─▶ validate.js (R-01~R-23)
+                                                   ├─▶ 집행결과 제출 양식 DOCX
+                                                   └─▶ 대시보드 집계
+```
+
+엑셀의 **총괄** 시트가 총괄명세서의 예산집행계획을, **지출내역** 시트가 일자별·세부집행내역을 만든다.
+파일을 `source/` 에 올리는 순간 Actions가 파싱·검증·양식생성·대시보드갱신을 끝낸다.
+
+Google Form과 Notion은 **엑셀에 없는 예외 항목**(인건비 참여율·생년월일, 준공서류)만 받는다.
+
+## 공개 대시보드
+
+원장에는 성명·생년월일·사업자등록번호가 들어 있으므로 이 저장소는 비공개다.
+대시보드는 **집계값만** 별도 공개 저장소로 배포한다.
+
+| 나가는 것 | 나가지 않는 것 |
+|---|---|
+| 비목별 예산·집행·집행률 | 성명, 생년월일 |
+| 재원별·기관별 집계 | 사업자등록번호 |
+| 검증 지적 건수, 진척, D-day | 거래처별 개별 금액, 증빙 상세 |
+
+`publish-dashboard.js` 는 집계에 금지 항목이 섞이면 **배포를 중단**한다.
 
 ## 연동
 
