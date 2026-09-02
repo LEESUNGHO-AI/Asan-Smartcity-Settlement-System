@@ -236,6 +236,20 @@ function render(d){
       <span class="law">${esc(f.근거)}</span>
     </div>`).join('') || '<p class="lead">지적사항이 없습니다.</p>';
 
+  const 문서확보 = d.준공.reduce((s,c)=>s+(c.문서확보||0),0);
+  const 문서필요 = d.준공.reduce((s,c)=>s+(c.문서필요||0),0);
+  const 준공 = (d.준공||[]).map(c => {
+    const 부족 = (c.문서필요||0)-(c.문서확보||0);
+    return `<tr>
+      <td>${esc(c.명칭)}</td>
+      <td class="c">${esc(c.유형)}</td>
+      <td class="c hide-sm">${esc(c.수행사||'-')}</td>
+      <td class="bar"><i style="width:${c.진도율||0}%"></i><span>${c.진도율??0}%</span></td>
+      <td class="c" style="${부족?'color:var(--seal);font-weight:600':'color:var(--ok)'}">${c.문서확보}/${c.문서필요}</td>
+      <td class="c">${esc(c.상태)}</td>
+    </tr>`;
+  }).join('');
+
   const 상태 = Object.entries(d.증빙.상태별).map(([k,v]) => `${esc(k)} ${v.toLocaleString('ko-KR')}건`).join(' / ');
 
   const 질의 = d.미확정사항.filter(x => x.상태 !== '회신완료').map(x =>
@@ -308,6 +322,15 @@ function render(d){
     </table>
     <p class="lead">증빙 검토 상태 — ${상태}</p>
   </section>
+
+  ${준공 ? `<section>
+    <h2>준공 준비 현황<em>단위공사 ${d.준공.length}건 · 필수문서 ${문서필요}종 중 ${문서확보}종 확보</em></h2>
+    <table>
+      <thead><tr><th style="width:34%">단위공사</th><th style="width:14%">유형</th><th style="width:20%" class="hide-sm">수행사</th><th style="width:10%">진도</th><th style="width:12%">문서</th><th style="width:10%">상태</th></tr></thead>
+      <tbody>${준공}</tbody>
+    </table>
+    <p class="lead">준공검사가 끝나도 필수문서가 결손이면 정산 검증에서 지적됩니다(R-09).</p>
+  </section>` : ''}
 
   ${질의 ? `<section>
     <h2>회신 대기 중인 확인사항<em>${미확정}건</em></h2>

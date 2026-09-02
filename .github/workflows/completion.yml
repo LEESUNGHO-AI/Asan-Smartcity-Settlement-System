@@ -1,0 +1,50 @@
+name: 준공서류 생성
+
+on:
+  push:
+    paths: ['data/completion.json']
+  workflow_dispatch:
+    inputs:
+      target:
+        description: '대상 (전체현황만 / 준공ID 하나 / all)'
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ledger-write
+  cancel-in-progress: false
+
+jobs:
+  completion:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+
+      - name: 준공서류 생성
+        env:
+          TARGET: ${{ github.event.inputs.target }}
+        run: |
+          if [ -z "$TARGET" ]; then node scripts/generate-completion.js
+          elif [ "$TARGET" = "all" ]; then node scripts/generate-completion.js --all
+          else node scripts/generate-completion.js --id "$TARGET"; fi
+
+      - name: 대시보드 집계 갱신
+        run: node scripts/publish-dashboard.js
+
+      - name: 커밋
+        run: |
+          if git diff --quiet dashboard/ && [ -z "$(git status --porcelain output/ 2>/dev/null)" ]; then
+            echo "변경 없음"; exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dashboard/ output/ 2>/dev/null || git add dashboard/
+          git commit -m "chore: 준공서류 생성 ($(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M') KST)"
+          git pull --rebase origin main
+          git push

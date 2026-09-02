@@ -120,7 +120,8 @@ for (const e of evidence) 상태별[e.검토상태] = (상태별[e.검토상태]
 const 준공 = completion.map((c) => {
   const 필수 = c.문서.filter((d) => d.필수여부 !== false);
   const 확보 = 필수.filter((d) => ['제출완료', '확정'].includes(d.상태)).length;
-  return { 명칭: c.명칭, 유형: c.유형, 상태: c.상태, 진도율: c.물리적진도율 ?? null, 문서확보: 확보, 문서필요: 필수.length };
+  return { 명칭: c.명칭, 유형: c.유형, 수행사: c.수행사 || null, 상태: c.상태,
+           진도율: c.물리적진도율 ?? null, 문서확보: 확보, 문서필요: 필수.length };
 });
 
 // ── D-day ──────────────────────────────────────────────
