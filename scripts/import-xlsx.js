@@ -14,6 +14,7 @@
  *   node scripts/import-xlsx.js source/JEIL/사업비.xlsx
  *   node scripts/import-xlsx.js source/JEIL/사업비.xlsx --org JEIL --dry-run
  *   node scripts/import-xlsx.js --all          source/ 아래 전 기관 일괄 처리
+ *   node scripts/import-xlsx.js --all --mask   개인 성명을 가려서 기록 (공개 저장소용)
  */
 
 const fs = require('fs');
@@ -24,52 +25,33 @@ const ROOT = path.resolve(__dirname, '..');
 const argv = process.argv.slice(2);
 const DRY = argv.includes('--dry-run');
 const ALL = argv.includes('--all');
+// 공개 저장소에서는 반드시 켜야 한다. 개인 성명이 원장에 그대로 남지 않도록 가린다.
+const MASK = argv.includes('--mask');
 const argOf = (k, d) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : d; };
 const codes = JSON.parse(fs.readFileSync(path.join(ROOT, 'codes/expense-categories.json'), 'utf8'));
 
 // ── 매핑 ────────────────────────────────────────────────
-// xlsx 표기 → 정산 스키마 열거값. 좌변을 바꾸지 말고 우변만 스키마에 맞춘다.
-const 비목맵 = {
-  '인건비': '인건비', '운영비': '운영비', '여비': '여비',
-  '업무추진비': '업무추진비', '연구개발비': '연구개발비',
-  '사업비배분': '민간이전', '사업비 배분': '민간이전', '민간이전': '민간이전',
-  '건설비': '건설비', '유형자산': '유형자산', '무형자산': '무형자산',
-};
-const 세목맵 = {
-  '보수': '보수', '기타직보수': '기타직보수',
-  '일반수용비': '일반수용비', '공공요금 및 제세': '공공요금및제세', '공공요금및제세': '공공요금및제세',
-  '임차료': '임차료', '복리후생비': '복리후생비', '일반용역비': '일반용역비',
-  '국내여비': '국내여비', '국외여비': '국외여비',
-  '연구개발비': '연구개발비',
-  '민간이전(교부)': '민간경상보조', '민간경상보조': '민간경상보조',
-  '시설비': '시설비', '자산취득비': '자산취득비', '무형자산': '무형자산',
-  '사업추진비': '사업추진비',
-};
+// 브라우저(dashboard/parse.js)와 같은 파일을 읽는다. 한쪽만 고치면 결과가 갈라진다.
+const M = JSON.parse(fs.readFileSync(path.join(ROOT, 'codes/xlsx-mapping.json'), 'utf8'));
+const 비목맵 = M.비목맵, 세목맵 = M.세목맵, 결제맵 = M.결제맵;
+const 단위사업규칙 = M.단위사업규칙.map((r) => [new RegExp(r.패턴, 'i'), r.코드]);
+const 법인어 = new RegExp(M.법인어, 'i');
+const 개인지급어 = new RegExp(M.개인지급어);
+
 /**
- * 결제방법 열은 지급수단과 증빙종류가 섞여 있다.
- * 지급수단으로 환산하되, 증빙종류인 값은 증빙유형으로도 함께 기록한다.
- * ※ '전자세금계산서'·'고지서'·'전자계산서'를 계좌이체로 보는 것은 추정이며,
- *   확정 전까지 해당 건은 검토상태를 '검토중'으로 둔다.
+ * 개인 성명 가리기. 급여·여비·평가위원 수당은 지급처가 개인 실명이다.
+ * 이성호 → 이*호 / 임혁 → 임*.  법인·상호는 상거래 정보이므로 가리지 않는다.
  */
-const 결제맵 = {
-  '계좌이체':       { 지급방식: '계좌이체',      증빙: ['계좌이체증'],                   확정: true },
-  '카드':          { 지급방식: '보조금전용카드', 증빙: ['카드전표'],                     확정: true },
-  '보조금전용카드':  { 지급방식: '보조금전용카드', 증빙: ['카드전표'],                     확정: true },
-  '전자세금계산서':  { 지급방식: '계좌이체',      증빙: ['전자세금계산서', '계좌이체증'],  확정: false },
-  '전자계산서':     { 지급방식: '계좌이체',      증빙: ['전자세금계산서', '계좌이체증'],  확정: false },
-  '고지서':        { 지급방식: '계좌이체',      증빙: ['지출결의서', '계좌이체증'],      확정: false },
-};
-/** 세목·내용에서 단위사업을 추정한다. 확정할 수 없으면 SP-PMO. */
-const 단위사업규칙 = [
-  [/OASIS|오아시스|SPOT|스팟|도고|카라반/i, 'SP-OASIS'],
-  [/이노베이션|배방|호서대|센터|스퀘어/i,     'SP-INNO'],
-  [/스마트폴|가로등/i,                      'SP-POLE'],
-  [/무인매장|무인점포/i,                    'SP-STORE'],
-  [/유무선|네트워크|통신망|AP\b|광케이블/i,   'SP-NET'],
-  [/DRT|수요응답|모빌리티|승강장/i,          'SP-DRT'],
-  [/AI|관제|플랫폼|서비스\s*인프라|SDDC|GPU|서버/i, 'SP-AI'],
-  [/리빙랩|델파이|연구|충남연구원|KAIST/i,    'SP-RND'],
-];
+function maskName(name, 비목, 목적) {
+  if (!MASK) return name;
+  const n = String(name || '').trim();
+  if (!n || 법인어.test(n)) return n;
+  const 개인문맥 = 비목 === '인건비' || 비목 === '여비' || 개인지급어.test(목적 || '');
+  if (!개인문맥) return n;
+  if (!/^[가-힣]{2,4}$/.test(n)) return n;
+  if (n.length === 2) return n[0] + '*';
+  return n[0] + '*'.repeat(n.length - 2) + n[n.length - 1];
+}
 
 const num = (v) => {
   if (v == null || v === '') return 0;
@@ -211,7 +193,7 @@ function parseEvidence(wb, org, warn) {
       보조세목: 세목, 세목코드: c.세목코드,
       재원: '국비',                       // xlsx에 재원 열이 없음 → 확정 전까지 국비로 두고 R-07이 잡게 한다
       계약ID: null,
-      지급처: { 구분: '사업자', 명칭: String(r[C.지급처] || '').trim() || '(미기재)' },
+      지급처: { 구분: '사업자', 명칭: maskName(String(r[C.지급처] || '').trim(), 비목, 목적) || '(미기재)' },
       집행일자: 일자,
       집행금액: 금액,
       사용목적: 목적,
@@ -227,7 +209,7 @@ function parseEvidence(wb, org, warn) {
     else if (세목 === '일반수용비') rec.세부구분 = '일반수용비';
     if (/선금|선급/.test(산출 + 내용)) rec.선금여부 = true;
     if (비목 === '인건비') {
-      rec.지급처 = { 구분: '개인', 명칭: String(r[C.지급처] || '').trim() || '(미기재)' };
+      rec.지급처 = { 구분: '개인', 명칭: maskName(String(r[C.지급처] || '').trim(), 비목, 목적) || '(미기재)' };
       rec.귀속월 = 일자.slice(0, 7);
       rec.검토상태 = '보완필요';
       rec.보완사유 = '인건비: 생년월일(마스킹)·참여율·필수증빙 5종 보완 필요';
@@ -306,6 +288,12 @@ for (const e of 전체증빙) {
 }
 
 console.log('\n─────────────────────────────────────────────');
+if (MASK) {
+  const 가림 = 전체증빙.filter((e) => /\*/.test(e.지급처.명칭)).length;
+  console.log(` 개인 성명 가림 ${가림}건 — 공개 저장소 커밋 가능`);
+} else {
+  console.log(' ⚠ --mask 미적용: 개인 실명이 그대로 기록됩니다. 비공개 저장소에서만 사용하십시오.');
+}
 console.log(` 총 ${전체증빙.length}건 · ${전체증빙.reduce((s, e) => s + e.집행금액, 0).toLocaleString('ko-KR')}원`);
 
 if (DRY) { console.log(' --dry-run: 파일을 기록하지 않았습니다.'); process.exit(0); }

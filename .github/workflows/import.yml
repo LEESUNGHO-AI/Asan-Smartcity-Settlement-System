@@ -26,8 +26,21 @@ jobs:
         with: { node-version: '20', cache: 'npm' }
       - run: npm ci
 
+      - name: 저장소 공개 여부 확인
+        id: vis
+        run: |
+          if [ "${{ github.event.repository.private }}" = "true" ]; then
+            echo "mask=" >> $GITHUB_OUTPUT
+            echo "공개=false" >> $GITHUB_OUTPUT
+            echo "비공개 저장소 — 실명 그대로 기록"
+          else
+            echo "mask=--mask" >> $GITHUB_OUTPUT
+            echo "공개=true" >> $GITHUB_OUTPUT
+            echo "공개 저장소 — 개인 성명을 가려서 기록합니다"
+          fi
+
       - name: 엑셀 → 원장 변환
-        run: node scripts/import-xlsx.js --all | tee import.log
+        run: node scripts/import-xlsx.js --all ${{ steps.vis.outputs.mask }} | tee import.log
 
       - name: 법정요건 검증
         run: |
@@ -49,10 +62,12 @@ jobs:
 
       - name: 원장 커밋
         run: |
-          if git diff --quiet data/ dashboard/; then echo "변경 없음"; exit 0; fi
+          if git diff --quiet data/ dashboard/ && [ -z "$(git status --porcelain output/ 2>/dev/null)" ]; then
+            echo "변경 없음"; exit 0
+          fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/ dashboard/
+          git add data/ dashboard/ output/ 2>/dev/null || git add data/ dashboard/
           git commit -m "data: 사업비 엑셀 반영 ($(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M') KST)"
           git push
 
@@ -64,12 +79,23 @@ jobs:
           GITHUB_RUN_ID: ${{ github.run_id }}
         run: node scripts/notify-slack.js --file validation-report.json || true
 
+      # 공개 저장소의 아티팩트는 누구나 내려받을 수 있으므로 DOCX를 올리지 않는다.
+      # 제출용 원본(실명 포함)은 PMO가 로컬에서 생성한다.
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.vis.outputs.공개 != 'true'
         with:
           name: 집행결과-제출양식
           path: |
             output/*.docx
+            validation-report.json
+            import.log
+          retention-days: 90
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.vis.outputs.공개 == 'true'
+        with:
+          name: 검증결과
+          path: |
             validation-report.json
             import.log
           retention-days: 90

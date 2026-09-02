@@ -105,6 +105,27 @@ td.bar.over>span{color:var(--seal)}
 .foot b{color:var(--ink-2);font-weight:500}
 a{color:#1f3864}
 
+/* ── 올리기 ── */
+.drop{border:2px dashed var(--rule);background:var(--field);padding:30px 20px;text-align:center;margin-top:14px;cursor:pointer;transition:border-color .15s,background .15s}
+.drop.on{border-color:var(--rule-strong);background:#eef3fa}
+.drop b{font-family:"Nanum Myeongjo",serif;font-size:19px;display:block;margin-bottom:5px}
+.drop span{font-size:13px;color:var(--ink-2)}
+.orgpick{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.orgpick label{font-size:13px;color:var(--ink-2);margin-right:4px}
+.orgpick button{font:inherit;font-size:13px;padding:6px 14px;border:1px solid var(--rule);background:#fff;cursor:pointer}
+.orgpick button[aria-pressed="true"]{background:var(--rule-strong);color:#fff;border-color:var(--rule-strong)}
+.acts{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+.acts button{font:inherit;font-size:13.5px;padding:9px 17px;border:1px solid var(--rule-strong);background:#fff;color:var(--rule-strong);cursor:pointer}
+.acts button.primary{background:var(--rule-strong);color:#fff}
+.acts button:disabled{opacity:.4;cursor:not-allowed}
+.msg{margin-top:12px;font-size:13px;padding:9px 12px;border-left:3px solid var(--rule)}
+.msg.ok{border-left-color:var(--ok);background:#eef5f0}
+.msg.err{border-left-color:var(--seal);background:#fbeeed}
+.msg.busy{border-left-color:var(--hold);background:#fdf6e6}
+details{margin-top:12px;font-size:13px}
+summary{cursor:pointer;color:var(--ink-2)}
+.tokrow{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.tokrow input{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--rule);flex:1;min-width:240px}
 @media (max-width:640px){
   .sheet{padding:26px 18px 52px;border:0}
   h1{font-size:23px}
@@ -119,10 +140,51 @@ a{color:#1f3864}
 @media print{body{background:#fff}.sheet{border:0;max-width:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="parse.js"></script>
 </head>
 <body>
-<div class="sheet" id="sheet">
-  <p style="color:var(--ink-3)">집행 현황을 불러오는 중입니다.</p>
+<div class="sheet">
+  <div class="dochead">
+    <div class="docmark">아산시 강소형 스마트시티 조성사업</div>
+    <h1 style="font-size:25px">사업비 엑셀 올리기</h1>
+    <div class="subject">올리시면 화면에서 바로 확인하고, 그대로 GitHub에 반영합니다</div>
+  </div>
+  <section id="upload" style="margin-top:20px">
+    <div class="orgpick">
+      <label>기관</label>
+      <button data-org="JEIL" aria-pressed="true">제일엔지니어링</button>
+      <button data-org="HOSEO" aria-pressed="false">호서대 산학협력단</button>
+      <button data-org="CNI" aria-pressed="false">충남연구원</button>
+      <button data-org="KAIST" aria-pressed="false">KAIST</button>
+    </div>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="엑셀 파일 올리기">
+      <b>여기에 사업비 엑셀을 끌어다 놓으세요</b>
+      <span>또는 눌러서 파일 선택 &nbsp;·&nbsp; 「총괄」과 「지출내역」 시트가 있어야 합니다</span>
+      <input type="file" id="file" accept=".xlsx,.xls" hidden>
+    </div>
+    <div id="upmsg"></div>
+    <div class="acts" id="acts" hidden>
+      <button id="btnDocx" class="primary">집행결과 제출 양식 내려받기</button>
+      <button id="btnEv">evidence.json</button>
+      <button id="btnBg">budget.json</button>
+      <button id="btnPush">GitHub에 반영</button>
+    </div>
+    <details id="tokdetail" hidden>
+      <summary>GitHub 반영에는 토큰이 한 번 필요합니다 (내 브라우저에만 저장)</summary>
+      <p class="lead">GitHub → Settings → Developer settings → Personal access tokens →
+      Fine-grained tokens → 이 저장소에 <b>Contents: Read and write</b> 권한만 주어 발급하십시오.</p>
+      <div class="tokrow">
+        <input type="password" id="tok" placeholder="github_pat_... 또는 ghp_...">
+        <button id="btnSaveTok">저장</button>
+      </div>
+    </details>
+  </section>
+
+
+  <div id="sheet" style="margin-top:34px">
+    <p style="color:var(--ink-3)">집행 현황을 불러오는 중입니다.</p>
+  </div>
 </div>
 
 <script>
@@ -131,9 +193,10 @@ const 억 = n => (n/1e8).toFixed(1);
 const pct = n => (n*100).toFixed(1);
 const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
+let DATA = null;
 fetch('data.json?v=' + Date.now())
   .then(r => { if(!r.ok) throw new Error(r.status); return r.json(); })
-  .then(render)
+  .then(d => { DATA = d; render(d); })
   .catch(e => {
     document.getElementById('sheet').innerHTML =
       '<h1>집행 현황을 불러오지 못했습니다</h1><p class="lead">data.json 을 읽을 수 없습니다 ('
@@ -180,7 +243,7 @@ function render(d){
 
   document.getElementById('sheet').innerHTML = `
   <div class="dochead">
-    <div class="asof"><b>${기준} 기준</b>준공까지 ${d.사업.dday.toLocaleString('ko-KR')}일<br>증빙 ${d.증빙.총건수.toLocaleString('ko-KR')}건</div>
+    <div class="asof"><b>${d.미리보기 ? '방금 올린 파일 기준' : 기준 + ' 기준'}</b>준공까지 ${d.사업.dday.toLocaleString('ko-KR')}일<br>증빙 ${d.증빙.총건수.toLocaleString('ko-KR')}건</div>
     <div class="docmark">보조사업 집행결과</div>
     <h1>${esc(d.사업.사업명)}</h1>
     <div class="subject">${esc(d.사업.세부사업명||'')}</div>
@@ -261,6 +324,193 @@ function render(d){
     ㈜제일엔지니어링종합건축사사무소 PMO · 상무 이성호 · 생성 ${생성.toLocaleString('ko-KR')}
   </div>`;
 }
+
+/* ════════════════════════════════════════════════════════
+   올리기 — 브라우저에서 파싱·검증하고, 원하면 GitHub에 반영
+   ════════════════════════════════════════════════════════ */
+const REPO = 'LEESUNGHO-AI/Asan-Smartcity-Settlement-System';
+let ORG = 'JEIL', RESULT = null, FILE = null;
+
+const $ = id => document.getElementById(id);
+const say = (t, cls) => { $('upmsg').innerHTML = t ? `<div class="msg ${cls||''}">${t}</div>` : ''; };
+
+document.querySelectorAll('.orgpick button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.orgpick button').forEach(x => x.setAttribute('aria-pressed','false'));
+  b.setAttribute('aria-pressed','true'); ORG = b.dataset.org;
+});
+
+const drop = $('drop'), fileInput = $('file');
+drop.onclick = () => fileInput.click();
+drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } };
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('on'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('on'); }));
+drop.addEventListener('drop', e => { if (e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); });
+fileInput.onchange = e => { if (e.target.files[0]) handle(e.target.files[0]); };
+
+async function handle(file) {
+  FILE = file;
+  say(`<b>${esc(file.name)}</b> 읽는 중…`, 'busy');
+  try {
+    await SMSParse.load('../');
+    const buf = await file.arrayBuffer();
+    const r = SMSParse.parse(buf, ORG, true);
+    RESULT = r;
+
+    if (!r.evidence.length) {
+      say('지출내역을 한 건도 읽지 못했습니다. 「지출내역」 시트와 열 이름(비목·세목·지출금액)을 확인하십시오.', 'err');
+      return;
+    }
+    const 합 = r.evidence.reduce((s,e)=>s+e.집행금액,0);
+    const 예산 = r.budget.reduce((s,b)=>s+b.예산집행계획,0);
+    const 오류 = r.findings.filter(f=>f.수준==='ERROR').reduce((s,f)=>s+f.건수,0);
+
+    let html = `<b>${esc(file.name)}</b> — 집행 ${r.evidence.length.toLocaleString('ko-KR')}건 · `
+      + `${won(합)}원 / 예산 ${won(예산)}원 (${pct(예산?합/예산:0)}%)`;
+    if (r.findings.length) {
+      html += '<br>' + r.findings.map(f =>
+        `<span style="color:${f.수준==='ERROR'?'var(--seal)':'var(--hold)'}">${f.규칙} ${f.건수.toLocaleString('ko-KR')}건 ${esc(f.요약)}</span>`).join(' · ');
+    }
+    if (r.대사.length) {
+      const d = r.대사.reduce((s,x)=>s+x.차이,0);
+      html += `<br><span style="color:var(--seal)">총괄 시트와 지출내역 시트가 ${won(Math.abs(d))}원 어긋납니다 — `
+        + r.대사.map(x=>`${esc(x.세목.split(' / ')[1])} ${x.차이>0?'+':''}${won(x.차이)}`).join(', ') + '</span>';
+    }
+    if (r.warnings.length) {
+      const u = [...new Set(r.warnings.map(w=>w.replace(/^\d+행: /,'')))];
+      html += `<br><span style="color:var(--ink-3)">건너뛴 행 ${r.warnings.length}건 — ${esc(u.slice(0,3).join(' / '))}${u.length>3?' 외':''}</span>`;
+    }
+    say(html, 오류 ? 'busy' : 'ok');
+    $('acts').hidden = false;
+    renderPreview(r);
+  } catch (err) {
+    say('읽지 못했습니다: ' + esc(err.message), 'err');
+  }
+}
+
+/* 화면의 총괄명세서를 방금 올린 파일 기준으로 다시 그린다 */
+function renderPreview(r) {
+  const 집행 = {};
+  r.evidence.forEach(e => { const k = e.비목코드+'-'+e.세목코드; 집행[k] = (집행[k]||0)+e.집행금액; });
+  const 비목별 = r.budget.map(b => {
+    const v = 집행[b.비목코드+'-'+b.세목코드] || 0;
+    return { 비목:b.보조비목, 비목코드:b.비목코드, 세목:b.보조세목, 세목코드:b.세목코드,
+             예산:b.예산집행계획, 집행:v, 잔액:b.예산집행계획-v,
+             집행률: b.예산집행계획>0 ? v/b.예산집행계획 : 0 };
+  });
+  const 예산 = 비목별.reduce((s,x)=>s+x.예산,0), 집행합 = 비목별.reduce((s,x)=>s+x.집행,0);
+  const 재원별 = {}; r.evidence.forEach(e => 재원별[e.재원]=(재원별[e.재원]||0)+e.집행금액);
+  const 상태별 = {}; r.evidence.forEach(e => 상태별[e.검토상태]=(상태별[e.검토상태]||0)+1);
+
+  DATA.비목별 = 비목별;
+  DATA.집행 = { 예산, 집행:집행합, 잔액:예산-집행합, 집행률: 예산?집행합/예산:0 };
+  DATA.재원별 = 재원별;
+  DATA.증빙 = { 총건수: r.evidence.length, 상태별 };
+  DATA.기관별 = DATA.기관별.map(o => o.코드===ORG
+    ? { ...o, 건수:r.evidence.length, 금액:집행합 } : { ...o, 건수:0, 금액:0 });
+  DATA.검증 = { 오류: r.findings.filter(f=>f.수준==='ERROR').reduce((s,f)=>s+f.건수,0),
+                경고: r.findings.filter(f=>f.수준==='WARN').reduce((s,f)=>s+f.건수,0),
+                항목: r.findings };
+  DATA.미리보기 = true;
+  render(DATA);
+  document.getElementById('upload').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+/* ── 내려받기 ── */
+const dl = (name, text, type) => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: type || 'application/json;charset=utf-8' }));
+  a.download = name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+};
+$('btnEv').onclick = () => dl(`evidence_${ORG}.json`,
+  JSON.stringify({ $schema:'../schema/evidence.schema.json', 갱신일시:new Date().toISOString(), 레코드:RESULT.evidence }, null, 2));
+$('btnBg').onclick = () => dl(`budget_${ORG}.json`,
+  JSON.stringify({ $schema:'../schema/budget.schema.json', 기준일:new Date().toISOString().slice(0,10),
+    근거:'사업비 xlsx 「총괄」 시트 자동 변환', 레코드:RESULT.budget }, null, 2));
+
+/* 집행결과 제출 양식 — 워드에서 바로 열리는 HTML 문서로 내보낸다 */
+$('btnDocx').onclick = () => {
+  const r = RESULT;
+  const 집행 = {}; r.evidence.forEach(e => { const k=e.비목코드+'-'+e.세목코드; 집행[k]=(집행[k]||0)+e.집행금액; });
+  const 예산 = r.budget.reduce((s,b)=>s+b.예산집행계획,0);
+  const 집행합 = r.evidence.reduce((s,e)=>s+e.집행금액,0);
+  const 기관명 = (DATA.기관별.find(o=>o.코드===ORG)||{}).명칭 || ORG;
+  const th = t => `<td style="background:#D9E2F3;font-weight:bold;text-align:center">${t}</td>`;
+  const n = v => `<td style="text-align:right">${won(v)}</td>`;
+
+  let h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8">
+  <style>@page{size:A4;margin:18mm 20mm}body{font-family:"맑은 고딕";font-size:10pt}
+  table{border-collapse:collapse;width:100%;margin:6pt 0}td{border:0.5pt solid #999;padding:3pt 5pt}
+  h2{font-size:12pt;margin:14pt 0 4pt}</style></head><body>
+  <p style="font-size:13pt;font-weight:bold">별첨 4  보조사업 집행결과 제출 양식 ( ${esc(기관명)} )</p>
+  <p style="color:#C00000;font-size:9pt">※ [초안] 대시보드에서 생성 — 기준정보 확정 후 정식 산출 필요</p>
+  <h2>1. 사업개요</h2><table>
+  <tr>${th('사업명')}<td colspan="3">${esc(DATA.사업.사업명)}</td></tr>
+  <tr>${th('세부사업명')}<td colspan="3">${esc(DATA.사업.세부사업명||'')}</td></tr>
+  <tr>${th('사업기간')}<td colspan="3">${DATA.사업.기간.개시} ~ ${DATA.사업.기간.종료}</td></tr>
+  <tr>${th('기 관 명')}<td>${esc(기관명)}</td>${th('총괄책임자')}<td>상무 이성호 (인)</td></tr>
+  <tr>${th('총 사업예산')}<td colspan="3">${won(DATA.사업.총사업비)} 원</td></tr></table>
+  <h2>2. 보조비목별 총괄명세서</h2><table>
+  <tr>${th('보조비목')}${th('보조세목')}${th('예산집행계획(A)')}${th('집행액(B)')}${th('집행잔액(A-B)')}${th('집행률(B/A)')}</tr>`;
+  r.budget.forEach(b => {
+    const v = 집행[b.비목코드+'-'+b.세목코드] || 0;
+    h += `<tr><td>${esc(b.보조비목)}(${b.비목코드})</td><td>${esc(b.보조세목)}(${b.세목코드})</td>`
+       + n(b.예산집행계획)+n(v)+n(b.예산집행계획-v)
+       + `<td style="text-align:center">${pct(b.예산집행계획?v/b.예산집행계획:0)}%</td></tr>`;
+  });
+  h += `<tr><td colspan="2" style="text-align:center;font-weight:bold;background:#F2F2F2">합계</td>`
+     + n(예산)+n(집행합)+n(예산-집행합)
+     + `<td style="text-align:center;font-weight:bold">${pct(예산?집행합/예산:0)}%</td></tr></table>`;
+  h += `<h2>3. 보조비목별 일자별 집행내역</h2><table>
+  <tr>${th('보조비목')}${th('보조세목')}${th('집행일자')}${th('집행금액')}${th('사용목적')}${th('지급방식')}</tr>`;
+  r.evidence.forEach(e => {
+    h += `<tr><td>${esc(e.보조비목)}(${e.비목코드})</td><td>${esc(e.보조세목)}(${e.세목코드})</td>`
+       + `<td style="text-align:center">${e.집행일자.replace(/-/g,'.')}</td>` + n(e.집행금액)
+       + `<td>${esc(e.사용목적)}</td><td style="text-align:center">${esc(e.지급방식)}</td></tr>`;
+  });
+  h += `<tr><td colspan="3" style="text-align:center;font-weight:bold;background:#F2F2F2">합 계</td>`
+     + n(집행합) + `<td colspan="2"></td></tr></table></body></html>`;
+  dl(`보조사업_집행결과_제출_${ORG}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.doc`,
+     '\ufeff' + h, 'application/msword');
+};
+
+/* ── GitHub에 반영 ── */
+const TOKKEY = 'sms_gh_token';
+$('btnPush').onclick = async () => {
+  const tok = localStorage.getItem(TOKKEY);
+  if (!tok) { $('tokdetail').hidden = false; $('tokdetail').open = true; $('tok').focus();
+    say('먼저 토큰을 저장하십시오. 아래 안내를 참고하시면 됩니다.', 'busy'); return; }
+  if (!FILE) return;
+  say('GitHub에 올리는 중…', 'busy');
+  try {
+    const b64 = await new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result.split(',')[1]);
+      fr.onerror = () => rej(new Error('파일을 읽지 못했습니다'));
+      fr.readAsDataURL(FILE);
+    });
+    const p = `source/${ORG}/${FILE.name}`;
+    const api = `https://api.github.com/repos/${REPO}/contents/${encodeURI(p)}`;
+    const hd = { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json' };
+    let sha; 
+    const cur = await fetch(api, { headers: hd });
+    if (cur.ok) sha = (await cur.json()).sha;
+    const put = await fetch(api, { method:'PUT', headers:{...hd,'Content-Type':'application/json'},
+      body: JSON.stringify({ message:`data(${ORG}): 사업비 엑셀 반영 — ${FILE.name}`, content:b64, sha }) });
+    if (!put.ok) throw new Error((await put.json()).message || put.status);
+    say(`올렸습니다. 몇 분 뒤 이 화면이 갱신됩니다. `
+      + `<a href="https://github.com/${REPO}/actions" target="_blank" rel="noopener">진행 상황 보기</a>`, 'ok');
+  } catch (err) {
+    say('올리지 못했습니다: ' + esc(err.message) + ' — 토큰 권한(Contents: Read and write)을 확인하십시오.', 'err');
+  }
+};
+$('btnSaveTok').onclick = () => {
+  const v = $('tok').value.trim();
+  if (!v) return;
+  localStorage.setItem(TOKKEY, v); $('tok').value = '';
+  say('토큰을 이 브라우저에 저장했습니다. 다시 「GitHub에 반영」을 누르십시오.', 'ok');
+};
+if (localStorage.getItem(TOKKEY)) $('tokdetail').hidden = true;
+
 </script>
 </body>
 </html>
