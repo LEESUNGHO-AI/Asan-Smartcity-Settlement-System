@@ -38,6 +38,27 @@ const 단위사업규칙 = M.단위사업규칙.map((r) => [new RegExp(r.패턴,
 const 법인어 = new RegExp(M.법인어, 'i');
 const 개인지급어 = new RegExp(M.개인지급어);
 
+// ── 마스터 결합 ─────────────────────────────────────────
+// 엑셀에 없는 항목(생년월일·참여율·사업자등록번호)을 명부에서 붙인다.
+// 엑셀을 고치지 않고도 4-1 세부집행내역을 채울 수 있게 하기 위함이다.
+const STAFF = (function () {
+  try {
+    const j = JSON.parse(fs.readFileSync(path.join(ROOT, 'codes/staff.json'), 'utf8'));
+    const m = {};
+    (j.인력 || []).forEach((x) => { m[x.성명] = { 생년월일: x.생년월일, 참여율: x.기본참여율, 구분: x.구분 }; });
+    ((j.외부인력 || {}).명단 || []).forEach((x) => { if (!m[x.성명]) m[x.성명] = { 생년월일: x.생년월일 }; });
+    return m;
+  } catch (e) { return {}; }
+})();
+const VENDOR = (function () {
+  try {
+    const j = JSON.parse(fs.readFileSync(path.join(ROOT, 'codes/vendors.json'), 'utf8'));
+    const m = {};
+    (j.거래처 || []).forEach((x) => { if (x.사업자등록번호) m[x.상호] = x.사업자등록번호; });
+    return m;
+  } catch (e) { return {}; }
+})();
+
 /**
  * 개인 성명 가리기. 급여·여비·평가위원 수당은 지급처가 개인 실명이다.
  * 이성호 → 이*호 / 임혁 → 임*.  법인·상호는 상거래 정보이므로 가리지 않는다.
@@ -79,6 +100,21 @@ function 코드찾기(비목, 세목) {
   const s = b.세목.find((x) => x.명칭 === 세목);
   return s ? { 비목코드: b.코드, 세목코드: s.코드 } : null;
 }
+/** 원본 성명으로 명부를 조회한 뒤, 기록은 마스킹된 이름으로 남긴다. */
+function 지급처만들기(원본, 비목, 목적, 개인강제) {
+  const 이름 = 원본 || '(미기재)';
+  const st = STAFF[이름];
+  const 개인 = 개인강제 || !!st;
+  const out = { 구분: 개인 ? '개인' : '사업자', 명칭: maskName(이름, 비목, 목적) || '(미기재)' };
+  if (개인) {
+    if (st && st.생년월일) out.생년월일 = st.생년월일;
+    if (st && typeof st.참여율 === 'number') out.참여율 = st.참여율;
+  } else if (VENDOR[이름]) {
+    out.사업자등록번호 = VENDOR[이름];
+  }
+  return out;
+}
+
 function 단위사업추정(text) {
   for (const [re, code] of 단위사업규칙) if (re.test(text)) return code;
   return 'SP-PMO';
@@ -156,6 +192,7 @@ function parseEvidence(wb, org, warn) {
     이체일자: col('이체일자'), 지급처: col('지급처'), 내용: col('내용'),
     공급가액: col('공급가액'), 부가세: col('부가세'), 지출금액: col('지출금액'),
     사업연도: col('사업연도'), 비고: col('비고'),
+    재원: col('재원') >= 0 ? col('재원') : col('재원구분'),
   };
 
   const out = [];
@@ -191,9 +228,10 @@ function parseEvidence(wb, org, warn) {
       단위사업: 단위사업추정(`${산출} ${내용} ${세목}`),
       보조비목: 비목, 비목코드: c.비목코드,
       보조세목: 세목, 세목코드: c.세목코드,
-      재원: '국비',                       // xlsx에 재원 열이 없음 → 확정 전까지 국비로 두고 R-07이 잡게 한다
+      // 엑셀에 재원 열이 있으면 읽고, 없으면 '미구분'으로 남긴다. 지어내지 않는다.
+      재원: (C.재원 >= 0 && String(r[C.재원] || '').trim()) || '미구분',
       계약ID: null,
-      지급처: { 구분: '사업자', 명칭: maskName(String(r[C.지급처] || '').trim(), 비목, 목적) || '(미기재)' },
+      지급처: 지급처만들기(String(r[C.지급처] || '').trim(), 비목, 목적),
       집행일자: 일자,
       집행금액: 금액,
       사용목적: 목적,
@@ -209,7 +247,7 @@ function parseEvidence(wb, org, warn) {
     else if (세목 === '일반수용비') rec.세부구분 = '일반수용비';
     if (/선금|선급/.test(산출 + 내용)) rec.선금여부 = true;
     if (비목 === '인건비') {
-      rec.지급처 = { 구분: '개인', 명칭: maskName(String(r[C.지급처] || '').trim(), 비목, 목적) || '(미기재)' };
+      rec.지급처 = 지급처만들기(String(r[C.지급처] || '').trim(), 비목, 목적, true);
       rec.귀속월 = 일자.slice(0, 7);
       rec.검토상태 = '보완필요';
       rec.보완사유 = '인건비: 생년월일(마스킹)·참여율·필수증빙 5종 보완 필요';

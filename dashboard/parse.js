@@ -9,14 +9,36 @@
 (function (global) {
   'use strict';
 
-  var M = null, CODES = null;
+  var M = null, CODES = null, STAFF = {}, VENDOR = {};
 
   function load(base) {
     base = base || '../';
+    var get = function (f) { return fetch(base + f).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); };
     return Promise.all([
-      fetch(base + 'codes/xlsx-mapping.json').then(function (r) { return r.json(); }),
-      fetch(base + 'codes/expense-categories.json').then(function (r) { return r.json(); })
-    ]).then(function (a) { M = a[0]; CODES = a[1]; return true; });
+      get('codes/xlsx-mapping.json'), get('codes/expense-categories.json'),
+      get('codes/staff.json'), get('codes/vendors.json')
+    ]).then(function (a) {
+      M = a[0]; CODES = a[1];
+      // 엑셀에 없는 생년월일·참여율·사업자등록번호를 명부에서 붙인다
+      if (a[2]) {
+        (a[2].인력 || []).forEach(function (x) { STAFF[x.성명] = { 생년월일: x.생년월일, 참여율: x.기본참여율 }; });
+        (((a[2].외부인력) || {}).명단 || []).forEach(function (x) { if (!STAFF[x.성명]) STAFF[x.성명] = { 생년월일: x.생년월일 }; });
+      }
+      if (a[3]) (a[3].거래처 || []).forEach(function (x) { if (x.사업자등록번호) VENDOR[x.상호] = x.사업자등록번호; });
+      return true;
+    });
+  }
+
+  function 지급처만들기(원본, 비목, 목적, mask, 개인강제) {
+    var 이름 = 원본 || '(미기재)';
+    var st = STAFF[이름];
+    var 개인 = 개인강제 || !!st;
+    var out = { 구분: 개인 ? '개인' : '사업자', 명칭: maskName(이름, 비목, 목적, mask) || '(미기재)' };
+    if (개인) {
+      if (st && st.생년월일) out.생년월일 = st.생년월일;
+      if (st && typeof st.참여율 === 'number') out.참여율 = st.참여율;
+    } else if (VENDOR[이름]) { out.사업자등록번호 = VENDOR[이름]; }
+    return out;
   }
 
   var num = function (v) {
@@ -123,7 +145,8 @@
       비목: col('비목'), 세목: col('세목'), 산출기초: col('산출기초'), 결제방법: col('결제방법'),
       결제일자: H.map(function (x, k) { return x.indexOf('결제일자') === 0 ? k : -1; }).filter(function (k) { return k >= 0; })[0],
       이체일자: col('이체일자'), 지급처: col('지급처'), 내용: col('내용'),
-      공급가액: col('공급가액'), 부가세: col('부가세'), 지출금액: col('지출금액'), 비고: col('비고')
+      공급가액: col('공급가액'), 부가세: col('부가세'), 지출금액: col('지출금액'), 비고: col('비고'),
+      재원: col('재원') >= 0 ? col('재원') : col('재원구분')
     };
 
     var out = [], seq = {};
@@ -149,9 +172,8 @@
         증빙ID: 'EV-' + y + '-' + ('0000' + seq[y]).slice(-5),
         기관: org, 단위사업: 단위사업추정(산출 + ' ' + 내용 + ' ' + 세목),
         보조비목: 비목, 비목코드: c.비목코드, 보조세목: 세목, 세목코드: c.세목코드,
-        재원: '국비', 계약ID: null,
-        지급처: { 구분: 비목 === '인건비' ? '개인' : '사업자',
-                 명칭: maskName(String(row[C.지급처] || '').trim(), 비목, 목적, mask) || '(미기재)' },
+        재원: (C.재원 >= 0 && String(row[C.재원] || '').trim()) || '미구분', 계약ID: null,
+        지급처: 지급처만들기(String(row[C.지급처] || '').trim(), 비목, 목적, mask, 비목 === '인건비'),
         집행일자: 일자, 집행금액: 금액, 사용목적: 목적,
         지급방식: 결제.지급방식, 증빙유형: 결제.증빙,
         검토상태: 비목 === '인건비' ? '보완필요' : (결제.확정 ? '제출완료' : '검토중'),
@@ -187,6 +209,11 @@
       '인건비 참여율·증빙 보완 필요', '작성지침 §5');
     add('WARN', 'R-23', evidence.filter(function (e) { return e.집행금액 < 0; }).length,
       '환불·정정(음수 집행)', '작성지침 §5');
+    add('ERROR', 'R-24', evidence.filter(function (e) { return e.재원 === '미구분'; }).length,
+      '재원(국비·도비·시비) 구분 없음 — 엑셀에 재원 열 추가 필요', '작성지침 §4②');
+    add('WARN', 'R-25', evidence.filter(function (e) {
+      return e.지급처.구분 === '사업자' && !e.지급처.사업자등록번호; }).length,
+      '사업자등록번호 미확보 — codes/vendors.json 보완', '작성지침 §5');
     var 예산맵 = {};
     budget.forEach(function (b) { 예산맵[b.비목코드 + '-' + b.세목코드] = b.예산집행계획; });
     var 집행 = {};
