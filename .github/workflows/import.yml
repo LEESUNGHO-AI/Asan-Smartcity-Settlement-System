@@ -48,12 +48,15 @@ jobs:
           node scripts/validate.js || true
 
       - name: 집행결과 제출 양식 생성
+        env:
+          # inputs 는 수동 실행에서만 존재하므로 github.event.inputs 로 안전하게 읽는다
+          REPORT_STATUS: ${{ github.event.inputs.status || '확정,제출완료' }}
         run: |
           for ORG in JEIL HOSEO CNI KAIST; do
             if [ -d "source/$ORG" ] && [ -n "$(ls -A source/$ORG/*.xls* 2>/dev/null)" ]; then
               node scripts/generate-report.js --org "$ORG" \
                 --from 2023-12-01 --to 2026-12-31 \
-                --status "${{ inputs.status || '확정,제출완료' }}" || true
+                --status "$REPORT_STATUS" || true
             fi
           done
 
