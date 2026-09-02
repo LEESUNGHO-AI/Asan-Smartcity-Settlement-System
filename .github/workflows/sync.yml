@@ -32,8 +32,11 @@ jobs:
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_EVIDENCE_DB: ${{ secrets.NOTION_EVIDENCE_DB }}
+          DRY: ${{ github.event.inputs.dry_run }}
         run: |
-          node scripts/sync-notion.js ${{ inputs.dry_run && '--dry-run' || '' }} | tee sync.log
+          ARGS=""
+          if [ "$DRY" = "true" ]; then ARGS="--dry-run"; fi
+          node scripts/sync-notion.js $ARGS | tee sync.log
 
       - name: 법정요건 검증
         id: validate
@@ -42,7 +45,7 @@ jobs:
           node scripts/validate.js || echo "failed=true" >> $GITHUB_OUTPUT
 
       - name: 변경사항 커밋
-        if: ${{ !inputs.dry_run }}
+        if: github.event.inputs.dry_run != 'true'
         run: |
           if git diff --quiet data/; then
             echo "원장 변경 없음"; exit 0
