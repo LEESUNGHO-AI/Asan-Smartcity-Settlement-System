@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ledger-write
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -23,33 +27,25 @@ jobs:
       - name: 집계 생성 (개인정보 미포함 검사 포함)
         run: node scripts/publish-dashboard.js
 
-      - name: 배포 대상 확인
-        id: chk
-        run: |
-          if [ -z "${{ secrets.DASHBOARD_TOKEN }}" ]; then
-            echo "ready=false" >> $GITHUB_OUTPUT
-            echo "::notice::DASHBOARD_TOKEN 미설정 — 공개 저장소 배포를 건너뜁니다."
-            echo "::notice::현재 저장소가 공개라면 dashboard/ 가 이미 GitHub Pages 로 서빙되므로 별도 배포가 필요 없습니다."
-          else
-            echo "ready=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: 집계 커밋 (같은 저장소 Pages 사용 시)
-        if: steps.chk.outputs.ready != 'true'
+      - name: 같은 저장소에 반영
         run: |
           if git diff --quiet dashboard/; then echo "변경 없음"; exit 0; fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add dashboard/
           git commit -m "chore: 대시보드 집계 갱신 ($(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M') KST)"
+          git pull --rebase origin main
           git push
 
-      - name: 공개 저장소로 배포
-        if: steps.chk.outputs.ready == 'true'
+      # 저장소를 비공개로 전환한 뒤에만 쓰는 단계.
+      # 변수 DASHBOARD_REPO 를 지정해야 동작하며, 없으면 조용히 건너뛴다.
+      # (Settings → Secrets and variables → Actions → Variables 탭)
+      - name: 공개 저장소로 배포 (선택)
+        if: vars.DASHBOARD_REPO != '' && secrets.DASHBOARD_TOKEN != ''
         uses: peaceiris/actions-gh-pages@v4
         with:
           personal_token: ${{ secrets.DASHBOARD_TOKEN }}
-          external_repository: LEESUNGHO-AI/Asan-Smartcity-Settlement-Dashboard
+          external_repository: ${{ vars.DASHBOARD_REPO }}
           publish_branch: gh-pages
           publish_dir: ./dashboard
           commit_message: '집계 갱신'

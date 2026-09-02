@@ -19,10 +19,29 @@ jobs:
           node-version: '20'
       - run: npm ci || npm install
       - name: 스키마 및 법정요건 검증
-        run: node scripts/validate.js
+        id: v
+        run: |
+          set +e
+          node scripts/validate.js | tee validate.txt
+          echo "code=$?" >> $GITHUB_OUTPUT
+          {
+            echo "## 정산 원장 검증 결과"
+            echo '```'
+            tail -40 validate.txt
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
       - name: 검증결과 JSON 산출
         if: always()
         run: node scripts/validate.js --json > validation-report.json || true
+
+      # 구조(스키마) 오류만 잡을 실패로 처리한다. 기준정보 미확정·증빙 결손 같은
+      # 데이터 상태 문제는 Slack 과 요약으로 알리되 CI 를 붉게 만들지 않는다.
+      - name: 구조 오류 확인
+        if: always()
+        run: |
+          n=$(python3 -c "import json;d=json.load(open('validation-report.json'));print(sum(1 for f in d['결과'] if f['rule']=='SCHEMA'))")
+          echo "스키마 오류 $n 건"
+          if [ "$n" -gt 0 ]; then echo "::error::데이터 구조 오류 $n 건"; exit 1; fi
       - name: Slack 알림 (main 브랜치·정기실행만)
         if: always() && (github.ref == 'refs/heads/main' || github.event_name == 'schedule')
         env:

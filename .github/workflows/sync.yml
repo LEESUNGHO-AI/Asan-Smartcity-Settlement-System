@@ -14,7 +14,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: sync-ledger
+  group: ledger-write
   cancel-in-progress: false
 
 jobs:
@@ -28,7 +28,16 @@ jobs:
           cache: 'npm'
       - run: npm ci
 
+      - name: Notion 설정 확인
+        id: nt
+        run: |
+          if [ -z "${{ secrets.NOTION_TOKEN }}" ]; then
+            echo "::warning::NOTION_TOKEN 미설정 — 이 단계를 건너뜁니다."
+            echo "ok=false" >> $GITHUB_OUTPUT
+          else echo "ok=true" >> $GITHUB_OUTPUT; fi
+
       - name: Notion → 원장 동기화
+        if: steps.nt.outputs.ok == 'true'
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_EVIDENCE_DB: ${{ secrets.NOTION_EVIDENCE_DB }}
@@ -55,6 +64,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/
           git commit -m "data(evidence): Notion 동기화 ($(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M') KST) ${ADDED}"
+          git pull --rebase origin main
           git push
 
       - name: Slack 알림

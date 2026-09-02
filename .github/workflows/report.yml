@@ -27,10 +27,21 @@ jobs:
           cache: 'npm'
       - run: npm ci
 
-      - name: 원장 검증 (오류 시 생성 중단)
-        run: node scripts/validate.js
+      - name: 원장 검증
+        id: v
+        run: |
+          set +e
+          node scripts/validate.js --json > validation-report.json
+          n=$(python3 -c "import json;d=json.load(open('validation-report.json'));print(sum(1 for f in d['결과'] if f['rule']=='SCHEMA'))")
+          echo "schema=$n" >> $GITHUB_OUTPUT
+          node scripts/validate.js | tail -30
+          if [ "$n" -gt 0 ]; then
+            echo "::error::데이터 구조 오류 $n 건 — 양식을 생성하지 않습니다."
+          fi
+          exit 0
 
       - name: 집행결과 제출 양식 생성
+        if: steps.v.outputs.schema == '0'
         run: |
           node scripts/generate-report.js \
             --org "${{ inputs.org }}" \
