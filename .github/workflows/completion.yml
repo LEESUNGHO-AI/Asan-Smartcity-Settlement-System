@@ -30,7 +30,7 @@ jobs:
         env:
           TARGET: ${{ github.event.inputs.target }}
         run: |
-          if [ -z "$TARGET" ]; then node scripts/generate-completion.js
+          if [ -z "$TARGET" ]; then node scripts/generate-completion.js --all
           elif [ "$TARGET" = "all" ]; then node scripts/generate-completion.js --all
           else node scripts/generate-completion.js --id "$TARGET"; fi
 

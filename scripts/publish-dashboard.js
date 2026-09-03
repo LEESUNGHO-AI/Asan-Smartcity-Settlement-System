@@ -124,6 +124,27 @@ const 준공 = completion.map((c) => {
            진도율: c.물리적진도율 ?? null, 문서확보: 확보, 문서필요: 필수.length };
 });
 
+// ── 산출물 목록 ───────────────────────────────────────
+// output/ 의 파일을 대시보드에서 바로 받을 수 있도록 목록을 만든다.
+const 분류 = (n) =>
+  n.startsWith('보조사업_집행결과') ? '집행결과 제출 양식'
+  : n.startsWith('준공서류_확보현황') ? '준공서류 확보 현황'
+  : n.startsWith('준공검사조서') ? '준공검사조서'
+  : n.startsWith('검수조서') ? '검수조서'
+  : n.startsWith('인계인수서') ? '시설물 인계·인수서'
+  : '기타';
+let 산출물 = [];
+try {
+  const dir = path.join(ROOT, 'output');
+  산출물 = fs.readdirSync(dir)
+    .filter((f) => /\.(docx?|xlsx|pdf)$/i.test(f) && !f.startsWith('~$'))
+    .map((f) => {
+      const st = fs.statSync(path.join(dir, f));
+      return { 파일: f, 종류: 분류(f), 크기: st.size, 생성: st.mtime.toISOString().slice(0, 10) };
+    })
+    .sort((a, b) => (a.종류 === b.종류 ? a.파일.localeCompare(b.파일) : a.종류.localeCompare(b.종류)));
+} catch (e) { 산출물 = []; }
+
 // ── D-day ──────────────────────────────────────────────
 const 종료일 = base.사업.사업기간.종료일;
 const dday = Math.ceil((new Date(종료일) - new Date()) / 86400000);
@@ -147,6 +168,7 @@ const out = {
   계약: { 건수: contracts.length, 계약금액: contracts.reduce((s, c) => s + (c.계약금액 || 0), 0), 낙찰차액: contracts.reduce((s, c) => s + (c.낙찰차액 || 0), 0) },
   자산: { 건수: assets.length, 취득가액: assets.reduce((s, a) => s + (a.취득가액 || 0), 0), 미보고: assets.filter((a) => !a.보고 || !a.보고.취득보고일).length },
   준공,
+  산출물,
   검증,
   미확정사항: (base.미확정사항 || []).map((x) => ({ 항목: x.항목, 확인처: x.확인처, 중요도: x.중요도, 상태: x.상태, 질의번호: x.질의번호 || null })),
 };

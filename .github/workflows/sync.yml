@@ -41,11 +41,19 @@ jobs:
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_EVIDENCE_DB: ${{ secrets.NOTION_EVIDENCE_DB }}
+          NOTION_CONTRACTS_DB: ${{ secrets.NOTION_CONTRACTS_DB }}
+          NOTION_ASSETS_DB: ${{ secrets.NOTION_ASSETS_DB }}
+          NOTION_COMPLETION_DB: ${{ secrets.NOTION_COMPLETION_DB }}
           DRY: ${{ github.event.inputs.dry_run }}
         run: |
           ARGS=""
           if [ "$DRY" = "true" ]; then ARGS="--dry-run"; fi
           node scripts/sync-notion.js $ARGS | tee sync.log
+
+      - name: 준공서류·대시보드 갱신
+        run: |
+          node scripts/generate-completion.js --all || true
+          node scripts/publish-dashboard.js
 
       - name: 법정요건 검증
         id: validate

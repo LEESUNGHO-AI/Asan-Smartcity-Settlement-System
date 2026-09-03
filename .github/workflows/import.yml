@@ -60,6 +60,9 @@ jobs:
             fi
           done
 
+      - name: 준공서류 갱신
+        run: node scripts/generate-completion.js --all || true
+
       - name: 대시보드 집계 갱신
         run: node scripts/publish-dashboard.js
 
