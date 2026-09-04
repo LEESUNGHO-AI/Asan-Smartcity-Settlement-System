@@ -187,6 +187,13 @@ Google Form과 Notion은 **엑셀에 없는 예외 항목**(인건비 참여율�
 
 `publish-dashboard.js` 는 집계에 금지 항목이 섞이면 **배포를 중단**한다.
 
+## 자산관리 시스템 연동
+
+중요재산(R-06)은 별도 운영 중인 [자산관리 시스템](https://github.com/LEESUNGHO-AI/Asan-asset-management)을
+원천으로 한다. 자산 85개·총 152억을 관리하는 Notion 자산관리 마스터 DB 에서
+취득가액 50만원 초과분을 중요재산 DB 로 옮겨 정산에 반영한다. 중복 입력하지 않는다.
+자세한 내용은 [integrations/asset-management.md](integrations/asset-management.md).
+
 ## 연동
 
 ```

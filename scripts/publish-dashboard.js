@@ -127,7 +127,11 @@ const 준공 = completion.map((c) => {
 // ── 산출물 목록 ───────────────────────────────────────
 // output/ 의 파일을 대시보드에서 바로 받을 수 있도록 목록을 만든다.
 const 분류 = (n) =>
-  n.startsWith('보조사업_집행결과') ? '집행결과 제출 양식'
+  n.startsWith('[별지1호]') ? '법정서식 · 실적보고서'
+  : n.startsWith('[별지2호]') ? '법정서식 · 정산보고서'
+  : n.startsWith('[별지3호]') ? '법정서식 · 총괄명세서'
+  : n.startsWith('[별지4호]') ? '법정서식 · 일자별 집행명세서'
+  : n.startsWith('보조사업_집행결과') ? '집행결과 제출 양식(사업 자체 양식)'
   : n.startsWith('준공서류_확보현황') ? '준공서류 확보 현황'
   : n.startsWith('준공검사조서') ? '준공검사조서'
   : n.startsWith('검수조서') ? '검수조서'
@@ -152,6 +156,19 @@ const dday = Math.ceil((new Date(종료일) - new Date()) / 86400000);
 const 총예산 = 비목별.reduce((s, x) => s + x.예산, 0);
 const 총집행 = 비목별.reduce((s, x) => s + x.집행, 0);
 
+// 데이터 출처 집계 — 무엇이 자동이고 무엇이 수동인지
+const 출처집계 = (list) => {
+  const c = {};
+  for (const r of list) { const o = (r.감사추적 || {}).출처 || '?'; c[o] = (c[o] || 0) + 1; }
+  return c;
+};
+const 출처요약 = {
+  정산증빙: 출처집계(evidence),
+  계약: 출처집계(contracts),
+  중요재산: 출처집계(assets),
+  준공: 출처집계(completion),
+};
+
 const out = {
   생성일시: new Date().toISOString(),
   사업: {
@@ -166,9 +183,26 @@ const out = {
   비목별, 재원별, 기관별,
   증빙: { 총건수: evidence.length, 상태별 },
   계약: { 건수: contracts.length, 계약금액: contracts.reduce((s, c) => s + (c.계약금액 || 0), 0), 낙찰차액: contracts.reduce((s, c) => s + (c.낙찰차액 || 0), 0) },
-  자산: { 건수: assets.length, 취득가액: assets.reduce((s, a) => s + (a.취득가액 || 0), 0), 미보고: assets.filter((a) => !a.보고 || !a.보고.취득보고일).length },
+  자산: {
+    건수: assets.length,
+    취득가액: assets.reduce((s, a) => s + (a.취득가액 || 0), 0),
+    미보고: assets.filter((a) => !a.보고 || !a.보고.취득보고일).length,
+    유형별: (() => {
+      const m = {};
+      for (const a of assets) {
+        const k = /무형자산/.test(a.비고 || '') ? '무형자산(SW)' : '기계·장비';
+        m[k] = m[k] || { 건수: 0, 금액: 0 };
+        m[k].건수++; m[k].금액 += a.취득가액 || 0;
+      }
+      return m;
+    })(),
+    상위: [...assets].sort((a, b) => (b.취득가액 || 0) - (a.취득가액 || 0)).slice(0, 12)
+      .map((a) => ({ 재산명: a.재산명, 구분: /무형자산/.test(a.비고 || '') ? '무형자산' : '기계·장비',
+        취득가액: a.취득가액, 취득일: a.취득일, 처분제한: (a.처분제한 || {}).기간_년, 보고: !!(a.보고 && a.보고.취득보고일) })),
+  },
   준공,
   산출물,
+  출처요약,
   검증,
   미확정사항: (base.미확정사항 || []).map((x) => ({ 항목: x.항목, 확인처: x.확인처, 중요도: x.중요도, 상태: x.상태, 질의번호: x.질의번호 || null })),
 };

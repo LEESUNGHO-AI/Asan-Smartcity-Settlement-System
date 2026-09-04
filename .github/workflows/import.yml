@@ -60,6 +60,9 @@ jobs:
             fi
           done
 
+      - name: 법정서식 생성
+        run: node scripts/generate-legal-forms.js --org JEIL --status "확정,제출완료" || true
+
       - name: 준공서류 갱신
         run: node scripts/generate-completion.js --all || true
 

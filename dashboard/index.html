@@ -251,7 +251,7 @@ function render(d){
   }).join('');
 
   const RAW = 'https://github.com/LEESUNGHO-AI/Asan-Smartcity-Settlement-System/raw/main/output/';
-  const 종류순 = ['집행결과 제출 양식','준공서류 확보 현황','준공검사조서','검수조서','시설물 인계·인수서','기타'];
+  const 종류순 = ['법정서식 · 실적보고서','법정서식 · 정산보고서','법정서식 · 총괄명세서','법정서식 · 일자별 집행명세서','집행결과 제출 양식(사업 자체 양식)','준공서류 확보 현황','준공검사조서','검수조서','시설물 인계·인수서','기타'];
   const 묶음 = {};
   (d.산출물||[]).forEach(f => { (묶음[f.종류] = 묶음[f.종류] || []).push(f); });
   const 산출물 = 종류순.filter(k => 묶음[k]).map(k => `
@@ -261,6 +261,13 @@ function render(d){
       <td class="n" style="width:14%">${Math.round(f.크기/1024).toLocaleString('ko-KR')} KB</td>
       <td class="c" style="width:16%">${esc(f.생성)}</td>
     </tr>`).join('')}</tbody></table>`).join('');
+
+  const 자산유형 = Object.entries((d.자산 && d.자산.유형별) || {}).map(([k,v]) =>
+    `<tr><td>${esc(k)}</td><td class="c hide-sm">${v.건수}건</td><td class="n">${won(v.금액)}</td></tr>`).join('');
+  const 자산상위 = ((d.자산 && d.자산.상위) || []).map(a =>
+    `<tr><td>${esc(a.재산명)}</td><td class="c">${esc(a.구분)}</td><td class="n">${won(a.취득가액)}</td>
+     <td class="c hide-sm">${esc(a.취득일||'-')}</td>
+     <td class="c" style="${a.보고?'color:var(--ok)':'color:var(--seal)'}">${a.보고?'완료':'미보고'}</td></tr>`).join('');
 
   const 상태 = Object.entries(d.증빙.상태별).map(([k,v]) => `${esc(k)} ${v.toLocaleString('ko-KR')}건`).join(' / ');
 
@@ -336,12 +343,28 @@ function render(d){
   </section>
 
   ${준공 ? `<section>
-    <h2>준공 준비 현황<em>단위공사 ${d.준공.length}건 · 필수문서 ${문서필요}종 중 ${문서확보}종 확보</em></h2>
+    <h2>준공 준비 현황<em>단위공사 ${d.준공.length}건 · Notion 준공산출물 DB 연동</em></h2>
+    <p class="lead">진도율·상태·수행사는 Notion 에서 관리되며 매일 07:00 자동 반영됩니다. 필수문서 ${문서확보}/${문서필요}종 확보.</p>
     <table>
       <thead><tr><th style="width:34%">단위공사</th><th style="width:14%">유형</th><th style="width:20%" class="hide-sm">수행사</th><th style="width:10%">진도</th><th style="width:12%">문서</th><th style="width:10%">상태</th></tr></thead>
       <tbody>${준공}</tbody>
     </table>
     <p class="lead">준공검사가 끝나도 필수문서가 결손이면 정산 검증에서 지적됩니다(R-09).</p>
+  </section>` : ''}
+
+  ${d.자산 && d.자산.건수 ? `<section>
+    <h2>중요재산 현황<em>${d.자산.건수}건 · 취득가액 ${억(d.자산.취득가액)}억원 · 자산관리 시스템 연동</em></h2>
+    <p class="lead">별도 <a href="https://leesungho-ai.github.io/Asan-asset-management/" target="_blank" rel="noopener">자산관리 시스템</a>에서 취득가액 50만원 초과분을 가져옵니다. 취득 후 15일 이내 보고 의무(지침 §46①).</p>
+    <table>
+      <thead><tr><th>재산구분</th><th class="hide-sm">건수</th><th>취득가액</th></tr></thead>
+      <tbody>${자산유형}</tbody>
+    </table>
+    <p class="lead" style="margin-top:16px">취득가액 상위</p>
+    <table>
+      <thead><tr><th style="width:38%">재산명</th><th style="width:14%">구분</th><th>취득가액</th><th style="width:13%" class="hide-sm">취득일</th><th style="width:10%">보고</th></tr></thead>
+      <tbody>${자산상위}</tbody>
+    </table>
+    ${d.자산.미보고 ? `<p class="lead" style="color:var(--seal)">취득보고 미완료 ${d.자산.미보고}건 — 취득 후 15일 경과분은 소급보고 필요(R-06).</p>` : ''}
   </section>` : ''}
 
   ${산출물 ? `<section>
