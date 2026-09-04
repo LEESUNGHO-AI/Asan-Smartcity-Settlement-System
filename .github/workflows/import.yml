@@ -25,6 +25,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '20', cache: 'npm' }
       - run: npm ci
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: pip install openpyxl
 
       - name: 저장소 공개 여부 확인
         id: vis
@@ -65,6 +68,9 @@ jobs:
 
       - name: 준공서류 갱신
         run: node scripts/generate-completion.js --all || true
+
+      - name: 종합 엑셀 생성
+        run: python3 scripts/export-workbook.py || true
 
       - name: 대시보드 집계 갱신
         run: node scripts/publish-dashboard.js

@@ -242,7 +242,7 @@ function 단위서류(x) {
       { align: AlignmentType.CENTER, before: 400, size: 21 }));
     c.push(p(kdate(오늘), { align: AlignmentType.CENTER, before: 200, after: 300, size: 21 }));
     c.push(서명란(['검사자\n(PMO)', '입회자\n(수행사)', '확인\n(아산시)']));
-    files.push(build(c, `준공검사조서_${x.준공ID}_${x.명칭.slice(0, 14)}.docx`));
+    files.push(build(c, `준공검사조서_${x.준공ID}.docx`));
   }
 
   // ── 검수조서 ──
@@ -267,7 +267,7 @@ function 단위서류(x) {
     c.push(p('위와 같이 검수하였음을 확인합니다.', { align: AlignmentType.CENTER, before: 400, size: 21 }));
     c.push(p(kdate(오늘), { align: AlignmentType.CENTER, before: 200, after: 300, size: 21 }));
     c.push(서명란(['검수자', '입회자', '확인']));
-    files.push(build(c, `검수조서_${x.준공ID}_${x.명칭.slice(0, 14)}.docx`));
+    files.push(build(c, `검수조서_${x.준공ID}.docx`));
   }
 
   // ── 시설물 인계·인수서 ──
@@ -301,7 +301,7 @@ function 단위서류(x) {
       { align: AlignmentType.CENTER, before: 360, size: 21 }));
     c.push(p(kdate(오늘), { align: AlignmentType.CENTER, before: 200, after: 300, size: 21 }));
     c.push(서명란(['인계자\n(수행사)', '인수자\n(아산시)', '입회자\n(PMO)']));
-    files.push(build(c, `인계인수서_${x.준공ID}_${x.명칭.slice(0, 14)}.docx`));
+    files.push(build(c, `인계인수서_${x.준공ID}.docx`));
   }
 
   return Promise.all(files);
@@ -314,7 +314,7 @@ function 단위서류(x) {
 
   let 대상 = [];
   if (ONLY) 대상 = comp.filter((x) => x.준공ID === ONLY);
-  else if (ALL) 대상 = comp.filter((x) => ['준공검사대기', '준공완료', '인계완료'].includes(x.상태));
+  else if (ALL) 대상 = comp;  // 진행중 포함 전체
 
   if (ONLY && !대상.length) { console.error(`준공ID ${ONLY} 를 찾을 수 없습니다.`); process.exit(1); }
   for (const x of 대상) {
