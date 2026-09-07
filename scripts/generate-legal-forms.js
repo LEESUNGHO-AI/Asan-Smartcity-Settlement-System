@@ -155,14 +155,20 @@ function 실적보고서() {
 
   c.push(절('Ⅱ. 보조사업 개요'));
   c.push(kv([['사업목적', '디지털 OASIS 구현을 통한 지역 경제 활성화 및 데이터 기반 스마트시티 조성']]));
+  // 추진실적은 집행·진척 데이터로 자동 요약
+  const 집행액 = all.reduce((s2, e) => s2 + e.집행금액, 0);
   c.push(p('○ 추진방법', { bold: true, before: 140 }));
-  c.push(빈칸(2));
+  c.push(p('  단위사업 9종(디지털 OASIS SPOT·이노베이션 스퀘어·스마트폴·무인매장·유무선통신망·DRT·AI융합플랫폼·연구리빙랩·사업관리)을 컨소시엄 5개 기관이 분담 수행', { size: 17 }));
   c.push(p('○ 추진실적', { bold: true, before: 140 }));
-  c.push(빈칸(3));
+  c.push(p(`  총사업비 ${num(base.사업.총사업비.금액)}원 중 ${num(집행액)}원 집행(${pct(집행액, base.사업.총사업비.금액)}). 증빙 ${num(all.length)}건. 중요재산 취득 진행 중`, { size: 17 }));
+  c.push(p('  ※ 세부 추진실적은 별도 기재', { size: 15, color: '888888' }));
+  c.push(빈칸(1));
   c.push(p('○ 사업성과', { bold: true, before: 140 }));
+  c.push(p('  ※ 협약 성과지표 달성 결과 기재', { size: 15, color: '888888' }));
   c.push(빈칸(2));
   c.push(p('○ 성과 활용계획', { bold: true, before: 140 }));
-  c.push(빈칸(2));
+  c.push(p('  ※ 준공 후 3년 운영단계(2027~2029) 활용계획 기재', { size: 15, color: '888888' }));
+  c.push(빈칸(1));
 
   c.push(절('Ⅲ. 수행목표 대비 실적'));
   c.push(table(['성과지표', '목표', '실적', '달성률', '비고'],
