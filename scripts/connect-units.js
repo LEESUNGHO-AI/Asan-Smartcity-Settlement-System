@@ -24,7 +24,7 @@ const read = (p) => JSON.parse(fs.readFileSync(path.join(ROOT, p), 'utf8'));
 
 // 단위시스템 데이터 소스 (GitHub raw)
 const 소스 = {
-  BMS: 'https://raw.githubusercontent.com/LEESUNGHO-AI/Asan-Smart-City-Budget-Management-System-BMS-/main/data.json',
+  BMS: 'https://raw.githubusercontent.com/LEESUNGHO-AI/Asan-Smart-City-Budget-Management-System-BMS-/main/data/budget.json',
   WBS: 'https://raw.githubusercontent.com/LEESUNGHO-AI/Asan-Smartcity-WBS/main/data/summary-data.json',
   HR:  'https://raw.githubusercontent.com/LEESUNGHO-AI/Asan-HR-Management-Portal/main/data/hr.json',
   ASSET: 'https://raw.githubusercontent.com/LEESUNGHO-AI/Asan-asset-management/main/data/assets.json',

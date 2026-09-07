@@ -18,6 +18,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    continue-on-error: true
     env:
       # secrets 는 if: 조건에서 직접 참조할 수 없으므로 env 로 옮긴다
       DASHBOARD_TOKEN: ${{ secrets.DASHBOARD_TOKEN }}
