@@ -308,6 +308,14 @@ if (ALL) {
   targets.push({ file: path.resolve(f), org: argOf('--org', 'JEIL') });
 }
 
+// 엑셀이 하나도 없으면 원장을 덮어쓰지 않고 종료한다.
+// (빈 source 로 워크플로가 돌 때 기존 2,364건이 0으로 지워지는 것을 방지)
+if (targets.length === 0) {
+  console.log('처리할 엑셀 파일이 없습니다. 원장을 변경하지 않고 종료합니다.');
+  console.log('(source/{기관}/ 에 사업비 엑셀을 올리면 반영됩니다.)');
+  process.exit(0);
+}
+
 let 전체증빙 = [];
 let 예산 = null;
 for (const t of targets) {
