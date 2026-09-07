@@ -46,6 +46,9 @@ jobs:
         run: node scripts/import-xlsx.js --all ${{ steps.vis.outputs.mask }} > import.log 2>&1 || true
           cat import.log
 
+      - name: 단위시스템 연동 (BMS 재원·WBS 진척)
+        run: node scripts/connect-units.js || true
+
       - name: 법정요건 검증
         run: |
           node scripts/validate.js --json > validation-report.json || true
