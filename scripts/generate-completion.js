@@ -37,6 +37,13 @@ const base = read('data/baseline.json');
 const comp = read('data/completion.json').레코드;
 const contracts = read('data/contracts.json').레코드;
 const docsets = read('codes/completion-documents.json').유형별필수문서;
+const assets = read('data/assets.json').레코드;
+const evidence = read('data/evidence.json').레코드;
+// 단위사업별 자산·집행 인덱스 — 준공서류에 실제 데이터를 채운다
+const 자산by단위 = {};
+for (const a of assets) (자산by단위[a.단위사업] = 자산by단위[a.단위사업] || []).push(a);
+const 집행by단위 = {};
+for (const e of evidence) 집행by단위[e.단위사업] = (집행by단위[e.단위사업] || 0) + e.집행금액;
 const subs = read('codes/subprojects.json').코드;
 const subName = (c) => (subs.find((s) => s.코드 === c) || {}).명칭 || c;
 
@@ -251,9 +258,22 @@ function 단위서류(x) {
     c.push(title('검 수 조 서'));
     c.push(kv(공통));
     c.push(h2('1. 검수 내역'));
-    c.push(table(['No', '품명 / 항목', '규격', '단위', '수량', '검수결과'],
-      [1, 2, 3, 4, 5].map((i) => [{ t: i, align: 'c' }, '', '', { t: '', align: 'c' }, { t: '', align: 'c' }, { t: '', align: 'c' }]),
-      [7, 33, 24, 10, 10, 16]));
+    const 자산목록 = 자산by단위[x.단위사업] || [];
+    const 검수행 = 자산목록.length
+      ? 자산목록.map((a, i) => [
+          { t: i + 1, align: 'c' }, a.재산명, a.규격 || '',
+          { t: '식', align: 'c' }, { t: a.수량 || 1, align: 'c' },
+          { t: '적합', align: 'c' }])
+      : [1, 2, 3, 4, 5].map((i) => [{ t: i, align: 'c' }, '', '', { t: '', align: 'c' }, { t: '', align: 'c' }, { t: '', align: 'c' }]);
+    // 취득가액 합계행
+    if (자산목록.length) {
+      const 합 = 자산목록.reduce((s2, a) => s2 + (a.취득가액 || 0), 0);
+      검수행.push([{ t: '취득가액 계', align: 'c', bold: true, fill: 'F2F2F2', span: 4 },
+        { t: 자산목록.length + '건', align: 'c', bold: true, fill: 'F2F2F2' },
+        { t: 합.toLocaleString('ko-KR') + '원', align: 'c', bold: true, fill: 'F2F2F2' }]);
+    }
+    c.push(table(['No', '품명 / 항목', '규격', '단위', '수량', '검수결과'], 검수행, [7, 33, 24, 10, 10, 16]));
+    if (자산목록.length) c.push(p(`※ 자산관리 시스템 연동 — ${x.단위사업} 취득자산 ${자산목록.length}건 자동 반영`, { size: 16, color: '2E5496', before: 60 }));
     c.push(h2('2. 검수 확인'));
     c.push(table(['확인 항목', '내　　용', '확인'], [
       ['납품·설치 완료', '계약 수량 전량 납품 및 설치 완료', { t: '□', align: 'c' }],
@@ -276,9 +296,15 @@ function 단위서류(x) {
     c.push(title('시설물 인계 · 인수서'));
     c.push(kv(공통.concat([['인계자', x.수행사 || ''], ['인수자', '아산시']])));
     c.push(h2('1. 인계 대상'));
-    c.push(table(['No', '시설·자산명', '규격 / 수량', '설치장소', '자산ID'],
-      [1, 2, 3, 4, 5].map((i) => [{ t: i, align: 'c' }, '', '', '', { t: '', align: 'c' }]),
-      [7, 30, 20, 27, 16]));
+    const 인계자산 = 자산by단위[x.단위사업] || [];
+    const 인계행 = 인계자산.length
+      ? 인계자산.map((a, i) => [
+          { t: i + 1, align: 'c' }, a.재산명,
+          `${a.규격 || ''} / ${a.수량 || 1}`, a.설치장소 || '',
+          { t: a.자산ID, align: 'c' }])
+      : [1, 2, 3, 4, 5].map((i) => [{ t: i, align: 'c' }, '', '', '', { t: '', align: 'c' }]);
+    c.push(table(['No', '시설·자산명', '규격 / 수량', '설치장소', '자산ID'], 인계행, [7, 30, 20, 27, 16]));
+    if (인계자산.length) c.push(p(`※ ${x.단위사업} 인계 자산 ${인계자산.length}건 · 취득가액 ${인계자산.reduce((s2,a)=>s2+(a.취득가액||0),0).toLocaleString('ko-KR')}원`, { size: 16, color: '2E5496', before: 60 }));
     c.push(h2('2. 인계 문서'));
     const 세트 = docsets[x.유형] || [];
     c.push(table(['No', '문서명', '부수', '인수확인'],
