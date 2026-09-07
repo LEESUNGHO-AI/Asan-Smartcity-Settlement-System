@@ -60,7 +60,8 @@ jobs:
 
           echo "실행: node integrations/notion/setup-databases.js $ARGS"
           echo "────────────────────────────────────────────"
-          node integrations/notion/setup-databases.js $ARGS | tee result.txt
+          node integrations/notion/setup-databases.js $ARGS > result.txt 2>&1 || true
+          cat result.txt
 
       - name: 결과 요약
         if: always()

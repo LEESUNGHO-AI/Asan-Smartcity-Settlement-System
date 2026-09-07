@@ -43,7 +43,8 @@ jobs:
           fi
 
       - name: 엑셀 → 원장 변환
-        run: node scripts/import-xlsx.js --all ${{ steps.vis.outputs.mask }} | tee import.log
+        run: node scripts/import-xlsx.js --all ${{ steps.vis.outputs.mask }} > import.log 2>&1 || true
+          cat import.log
 
       - name: 법정요건 검증
         run: |

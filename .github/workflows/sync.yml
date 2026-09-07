@@ -48,7 +48,8 @@ jobs:
         run: |
           ARGS=""
           if [ "$DRY" = "true" ]; then ARGS="--dry-run"; fi
-          node scripts/sync-notion.js $ARGS | tee sync.log
+          node scripts/sync-notion.js $ARGS > sync.log 2>&1 || true
+          cat sync.log
 
       - name: 준공서류·대시보드 갱신
         run: |

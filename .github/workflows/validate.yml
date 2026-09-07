@@ -22,8 +22,9 @@ jobs:
         id: v
         run: |
           set +e
-          node scripts/validate.js | tee validate.txt
+          node scripts/validate.js > validate.txt 2>&1
           echo "code=$?" >> $GITHUB_OUTPUT
+          cat validate.txt
           {
             echo "## 정산 원장 검증 결과"
             echo '```'
